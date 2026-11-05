@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>임실 청소년 문화의집 아케이드 안내 포스터 (인쇄용)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@600;700;800;900&family=Jua&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* 포스터 카드 */
+    .poster-page {
+      background: white;
+      width: 100%;
+      max-width: 680px;
+      padding: 48px 40px;
+      border-radius: 28px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      border: 4px solid #38bdf8;
+      position: relative;
+    }
+
+    .header-tag {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0284c7;
+      font-weight: 800;
+      font-size: 1.05rem;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      margin-bottom: 16px;
+    }
+
+    h1.poster-title {
+      font-family: 'Jua', 'Pretendard', sans-serif;
+      font-size: 2.5rem;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    p.poster-sub {
+      font-size: 1.15rem;
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* QR 코드 카드 */
+    .qr-container {
+      background: #f8fafc;
+      border: 3px dashed #cbd5e1;
+      border-radius: 24px;
+      padding: 28px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    .qr-img {
+      width: 260px;
+      height: 260px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .url-badge {
+      margin-top: 14px;
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #0284c7;
+      background: #e0f2fe;
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    /* 이용 안내 3단계 */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .step-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .step-card .num {
+      display: inline-block;
+      width: 26px;
+      height: 26px;
+      background: #0284c7;
+      color: white;
+      text-align: center;
+      line-height: 26px;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .step-card h4 {
+      font-size: 0.98rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .step-card p {
+      font-size: 0.82rem;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    .footer-desc {
+      font-size: 0.92rem;
+      color: #94a3b8;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 20px;
+    }
+
+    /* 화면용 인쇄 버튼 (인쇄 시 숨김) */
+    .btn-print-box {
+      margin-top: 24px;
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s;
+    }
+
+    .btn-print:hover {
+      background: #0369a1;
+      transform: translateY(-2px);
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .poster-page {
+        box-shadow: none;
+        border: 2px solid #38bdf8;
+        max-width: 100%;
+        padding: 20mm;
+      }
+      .btn-print-box {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="poster-page">
+    <div class="header-tag">✨ 임실 청소년 문화의집 디지털 창작 아케이드</div>
+    <h1 class="poster-title">스마트폰으로 즐기는 학생 창작 게임!</h1>
+    <p class="poster-sub">
+      우리 친구들이 직접 코딩으로 만든 11가지 게임과 인터랙티브 아트를<br>
+      지금 바로 스마트폰 카메라로 비춰서 플레이해 보세요!
+    </p>
+
+    <div class="qr-container">
+      <img src="imsil_arcade_qr.png" alt="임실 아케이드 QR코드" class="qr-img">
+      <div class="url-badge">https://kalndoma-dot.github.io/imsil-arcade/</div>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="num">1</span>
+        <h4>카메라 앱 켜기</h4>
+        <p>스마트폰 기본 카메라 앱을 열어 QR 코드를 비춰주세요.</p>
+      </div>
+      <div class="step-card">
+        <span class="num">2</span>
+        <h4>노란색 링크 터치</h4>
+        <p>화면에 뜨는 웹 링크 알림을 가볍게 터치합니다.</p>
+      </div>
+      <div class="step-card">
+        <span class="num">3</span>
+        <h4>게임 즐기기 & 응원</h4>
+        <p>원하는 게임을 고르고 방명록에 응원글도 남겨보세요!</p>
+      </div>
+    </div>
+
+    <div class="footer-desc">
+      🎮 풍선 터트리기 · 두더지 잡기 · 격자 보물찾기 · 백룸 탈출 · 네온 10초 스톱 등 11개 작품 수록
+    </div>
+  </div>
+
+  <div class="btn-print-box">
+    <button class="btn-print" onclick="window.print()">🖨️ A4 포스터 바로 인쇄하기</button>
+  </div>
+
+</body>
+</html>
