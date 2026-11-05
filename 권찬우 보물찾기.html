@@ -2,12 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>격자 보물찾기</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         body {
@@ -16,7 +18,7 @@
             background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
             color: #f8fafc;
             margin: 0;
-            padding: 20px;
+            padding: 16px 12px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -24,17 +26,17 @@
         }
 
         h1 {
-            font-size: 2.2rem;
-            margin: 0 0 10px;
+            font-size: 2rem;
+            margin: 0 0 8px;
             color: #fbbf24;
             text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);
             letter-spacing: -0.5px;
         }
 
         .subtitle {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             color: #94a3b8;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             max-width: 620px;
             line-height: 1.5;
         }
@@ -42,11 +44,11 @@
         /* 컨트롤 및 정보 패널 */
         .control-panel {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
-            margin-bottom: 18px;
+            margin-bottom: 14px;
         }
 
         .diff-group {
@@ -62,8 +64,8 @@
             background: transparent;
             color: #cbd5e1;
             border: none;
-            padding: 6px 14px;
-            font-size: 0.88rem;
+            padding: 6px 12px;
+            font-size: 0.85rem;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
@@ -78,31 +80,93 @@
 
         #info-panel {
             display: flex;
-            gap: 18px;
+            gap: 14px;
             background: rgba(15, 23, 42, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 10px 22px;
+            padding: 8px 18px;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .info-box span {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800;
+        }
+
+        /* 스마트폰/모바일용 모드 전환 스위치 바 */
+        .mode-switch-wrapper {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-switch-bar {
+            display: inline-flex;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
+            padding: 4px;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 10px 22px;
+            font-size: 0.98rem;
+            font-weight: 800;
+            border-radius: 9999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active#btnModeDig {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
+        }
+
+        .mode-btn.active#btnModeFlag {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5);
+            animation: pulseFlag 1.5s infinite;
+        }
+
+        @keyframes pulseFlag {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        .mode-tip {
+            font-size: 0.8rem;
+            color: #38bdf8;
+            font-weight: 600;
         }
 
         /* 지뢰찾기 스타일 그리드 보드 */
         #game-board-container {
-            padding: 14px;
+            padding: 12px;
             background: #111827;
             border: 3px solid #475569;
             border-radius: 16px;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), inset 0 2px 6px rgba(255, 255, 255, 0.08);
-            margin: 10px auto 20px;
+            margin: 6px auto 16px;
             display: inline-block;
             transition: transform 0.08s ease;
+            max-width: 98vw;
+            overflow-x: auto;
         }
 
         #game-board-container.shake {
@@ -122,34 +186,34 @@
             background: #1f2937;
             padding: 6px;
             border-radius: 10px;
+            touch-action: manipulation;
         }
 
         /* 개별 셀 스타일 */
         .cell {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             background: linear-gradient(145deg, #374151, #1f2937);
             border: 2px solid #4b5563;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 900;
             cursor: pointer;
             transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            touch-action: manipulation;
         }
 
         .cell:hover:not(.revealed) {
             background: linear-gradient(145deg, #4b5563, #374151);
             border-color: #f59e0b;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.2);
         }
 
         .cell:active:not(.revealed) {
-            transform: translateY(1px);
+            transform: scale(0.95);
         }
 
         /* 열린 셀 */
@@ -189,32 +253,34 @@
             100% { transform: scale(1); }
         }
 
-        /* 거리별 숫자 색상 (상하좌우 칸 수) */
-        .cell.dist-1 { color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6); } /* 1칸: 초근접 빨강 */
-        .cell.dist-2 { color: #f97316; text-shadow: 0 0 6px rgba(249, 115, 22, 0.5); } /* 2칸: 주황 */
-        .cell.dist-3 { color: #eab308; } /* 3칸: 노랑 */
-        .cell.dist-4 { color: #22c55e; } /* 4칸: 초록 */
-        .cell.dist-5 { color: #06b6d4; } /* 5칸: 하늘 */
-        .cell.dist-far { color: #64748b; } /* 6칸 이상: 회색 */
+        /* 거리별 숫자 색상 */
+        .cell.dist-1 { color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+        .cell.dist-2 { color: #f97316; text-shadow: 0 0 6px rgba(249, 115, 22, 0.5); }
+        .cell.dist-3 { color: #eab308; }
+        .cell.dist-4 { color: #22c55e; }
+        .cell.dist-5 { color: #06b6d4; }
+        .cell.dist-far { color: #64748b; }
 
         /* 깃발 마킹 셀 */
         .cell.flagged {
             color: #ef4444;
             background: #374151;
             border-color: #ef4444;
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
         }
 
         /* 조작 가이드 안내 */
         .guide-box {
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             color: #94a3b8;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             line-height: 1.6;
             background: rgba(255, 255, 255, 0.03);
             border: 1px dashed rgba(255, 255, 255, 0.15);
-            padding: 10px 18px;
-            border-radius: 10px;
-            max-width: 620px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            max-width: 600px;
         }
 
         .guide-box strong { color: #f1f5f9; }
@@ -255,26 +321,26 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            padding: 34px 40px;
+            padding: 30px 24px;
             background: rgba(15, 23, 42, 0.96);
             border: 2px solid #f59e0b;
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.3);
             z-index: 100;
             backdrop-filter: blur(8px);
-            min-width: 320px;
+            width: min(90vw, 360px);
         }
 
         #modal h2 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             margin: 0 0 12px;
         }
 
         #modal p {
             color: #cbd5e1;
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.5;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -282,20 +348,16 @@
 
     <h1>🏴‍☠️ 격자 보물찾기 (Treasure Sonar)</h1>
     <div class="subtitle">
-        지뢰찾기처럼 칸을 열어보세요! 숫자는 그 칸에서 <strong>상하좌우로 떨어진 가장 가까운 보물까지의 거리(칸 수)</strong>를 의미합니다.<br>
-        조심하세요! 아무 칸이나 누르면 숨겨진 <strong>💣 폭탄</strong>이 터집니다!
+        숫자는 상하좌우 가장 가까운 보물까지의 거리(칸 수)입니다.<br>
+        조심하세요! 아무 곳이나 파내면 숨겨진 <strong>💣 폭탄</strong>이 터집니다!
     </div>
 
+    <!-- 난이도 및 통계 -->
     <div class="control-panel">
         <div class="diff-group">
-            <button class="diff-btn" onclick="setDifficulty('easy')">쉬움 (6x6 · 💎3 · 💣3)</button>
-            <button class="diff-btn active" onclick="setDifficulty('normal')">보통 (8x8 · 💎5 · 💣6)</button>
-            <button class="diff-btn" onclick="setDifficulty('hard')">어려움 (10x10 · 💎7 · 💣11)</button>
-        </div>
-
-        <div class="diff-group">
-            <button class="diff-btn active" id="btnModeDig" onclick="setMode('dig')">⛏️ 파내기</button>
-            <button class="diff-btn" id="btnModeFlag" onclick="setMode('flag')">🚩 깃발</button>
+            <button class="diff-btn" onclick="setDifficulty('easy')">쉬움 (6x6)</button>
+            <button class="diff-btn active" onclick="setDifficulty('normal')">보통 (8x8)</button>
+            <button class="diff-btn" onclick="setDifficulty('hard')">어려움 (10x10)</button>
         </div>
 
         <div id="info-panel">
@@ -306,15 +368,29 @@
         </div>
     </div>
 
+    <!-- 스마트폰 모드 전환 토글 바 -->
+    <div class="mode-switch-wrapper">
+        <div class="mode-switch-bar">
+            <button class="mode-btn active" id="btnModeDig" onclick="setMode('dig')">
+                ⛏️ 파내기 모드
+            </button>
+            <button class="mode-btn" id="btnModeFlag" onclick="setMode('flag')">
+                🚩 깃발 꽂기 모드
+            </button>
+        </div>
+        <div class="mode-tip" id="modeTip">
+            👉 현재 <strong>파내기</strong> 상태입니다. (터치 시 타일을 팝니다)
+        </div>
+    </div>
+
     <!-- 게임 판 -->
     <div id="game-board-container">
         <div id="game-board"></div>
     </div>
 
     <div class="guide-box">
-        ⚠️ <span class="badge-danger">폭탄 주의</span>: 아무 곳이나 막 파내면 💣 폭탄이 터져 즉시 탈락합니다!<br>
-        💡 숫자가 <strong>1</strong>이면 바로 인접한 상하좌우 칸 중 하나에 보물이 숨어있습니다.<br>
-        🖱️ <strong>마우스 좌클릭</strong>: 칸 파내기 | 🚩 <strong>마우스 우클릭</strong>: 의심 위치 깃발 꽂기
+        📱 <strong>스마트폰 조작</strong>: 타일을 <strong>0.3초간 꾹 누르면(롱터치)</strong> 바로 깃발이 꽂힙니다! 또는 상단의 <strong>[🚩 깃발 모드]</strong>를 누르고 터치하세요.<br>
+        🖱️ <strong>PC 조작</strong>: 좌클릭 파내기 | 우클릭 깃발 꽂기
     </div>
 
     <button class="btn-action" onclick="startGame()">새 게임 시작 / 다시하기</button>
@@ -327,7 +403,7 @@
     </div>
 
     <script>
-        // 난이도 설정 (보물 수 & 폭탄 수)
+        // 난이도 설정
         const DIFFICULTIES = {
             easy:   { rows: 6,  cols: 6,  treasures: 3, bombs: 3,  time: 80 },
             normal: { rows: 8,  cols: 8,  treasures: 5, bombs: 6,  time: 90 },
@@ -356,24 +432,32 @@
         const totalBombsDisplay = document.getElementById('totalBombs');
         const clicksDisplay = document.getElementById('clicks');
         const modal = document.getElementById('modal');
+        const modeTip = document.getElementById('modeTip');
 
         function setDifficulty(diff) {
             currentDiff = diff;
             config = DIFFICULTIES[diff];
-            document.querySelectorAll('.control-panel .diff-group:first-child .diff-btn').forEach(b => {
+            document.querySelectorAll('.control-panel .diff-group .diff-btn').forEach(b => {
                 b.classList.remove('active');
             });
             event.target.classList.add('active');
             startGame();
         }
 
+        // 모드 전환 함수
         function setMode(mode) {
             currentMode = mode;
             document.getElementById('btnModeDig').classList.toggle('active', mode === 'dig');
             document.getElementById('btnModeFlag').classList.toggle('active', mode === 'flag');
+            if (mode === 'flag') {
+                modeTip.innerHTML = '🚩 <strong>깃발 꽂기</strong> 상태입니다. (터치 시 폭탄 의심 위치에 깃발을 꽂습니다)';
+                modeTip.style.color = '#ef4444';
+            } else {
+                modeTip.innerHTML = '⛏️ <strong>파내기</strong> 상태입니다. (터치 시 타일을 팝니다)';
+                modeTip.style.color = '#38bdf8';
+            }
         }
 
-        // 보물과의 최단 상하좌우 맨해튼 거리 계산 (|r1 - r2| + |c1 - c2|)
         function getMinManhattanDistance(r, c) {
             let minDist = Infinity;
             treasures.forEach(t => {
@@ -385,7 +469,6 @@
             return minDist;
         }
 
-        // 보물과 폭탄 배치 (첫 클릭한 위치는 절대 폭탄이 되지 않도록 안전 보장)
         function generateItems(excludeR, excludeC) {
             const allPositions = [];
             for (let r = 0; r < config.rows; r++) {
@@ -395,7 +478,6 @@
                 }
             }
 
-            // 무작위 셔플
             for (let i = allPositions.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
@@ -404,7 +486,6 @@
             treasures = allPositions.slice(0, config.treasures);
             bombs = allPositions.slice(config.treasures, config.treasures + config.bombs);
 
-            // 그리드 객체에 반영
             treasures.forEach(t => {
                 grid[t.r][t.c].isTreasure = true;
             });
@@ -432,9 +513,8 @@
             timerDisplay.textContent = timeLeft;
             clicksDisplay.textContent = clickCount;
 
-            board.style.gridTemplateColumns = `repeat(${config.cols}, 48px)`;
+            board.style.gridTemplateColumns = `repeat(${config.cols}, 44px)`;
 
-            // 그리드 셀 뼈대 생성
             for (let r = 0; r < config.rows; r++) {
                 grid[r] = [];
                 for (let c = 0; c < config.cols; c++) {
@@ -450,13 +530,60 @@
                         element: cellEl
                     };
 
-                    cellEl.addEventListener('click', () => {
+                    // --- 모바일 롱프레스 & 터치 인터랙션 지원 ---
+                    let longPressTimer = null;
+                    let isLongPress = false;
+                    let touchMoved = false;
+
+                    cellEl.addEventListener('touchstart', (e) => {
+                        if (!isPlaying || cellData.revealed) return;
+                        touchMoved = false;
+                        isLongPress = false;
+
+                        // 300ms 길게 누르면 깃발 토글
+                        longPressTimer = setTimeout(() => {
+                            isLongPress = true;
+                            toggleFlag(cellData);
+                            if (navigator.vibrate) navigator.vibrate(50); // 가벼운 진동 피드백
+                        }, 300);
+                    }, { passive: true });
+
+                    cellEl.addEventListener('touchmove', () => {
+                        touchMoved = true;
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
+                    }, { passive: true });
+
+                    cellEl.addEventListener('touchend', (e) => {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
+
+                        // 롱프레스였거나 화면을 스크롤한 경우 짧은 탭 무시
+                        if (isLongPress || touchMoved) return;
+
+                        e.preventDefault();
                         if (currentMode === 'flag') {
                             toggleFlag(cellData);
                         } else {
                             revealCell(cellData);
                         }
                     });
+
+                    // --- PC 마우스 클릭 / 우클릭 ---
+                    cellEl.addEventListener('click', (e) => {
+                        // 터치 기기에서 touchend 후 발생하는 가상 click 무시
+                        if (e.pointerType === 'touch') return;
+                        if (currentMode === 'flag') {
+                            toggleFlag(cellData);
+                        } else {
+                            revealCell(cellData);
+                        }
+                    });
+
                     cellEl.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         toggleFlag(cellData);
@@ -467,7 +594,6 @@
                 }
             }
 
-            // 타이머 시작
             timerId = setInterval(() => {
                 timeLeft--;
                 timerDisplay.textContent = timeLeft;
@@ -492,7 +618,6 @@
         function revealCell(cell) {
             if (!isPlaying || cell.revealed || cell.flagged) return;
 
-            // 첫 클릭 안전 보장: 첫 클릭 시점에 보물/폭탄 배치
             if (isFirstClick) {
                 isFirstClick = false;
                 generateItems(cell.r, cell.c);
@@ -504,13 +629,11 @@
             clicksDisplay.textContent = clickCount;
 
             if (cell.isBomb) {
-                // 폭탄을 밟음 -> 게임 오버!
                 cell.element.classList.add('bomb');
                 cell.element.textContent = '💣';
                 boardContainer.classList.add('shake');
                 endGame(false, 'bomb');
             } else if (cell.isTreasure) {
-                // 보물 발견!
                 cell.element.classList.add('treasure');
                 cell.element.textContent = '💎';
                 foundCount++;
@@ -520,7 +643,6 @@
                     endGame(true);
                 }
             } else {
-                // 일반 칸: 보물까지의 상하좌우 최단 거리 표시
                 const dist = getMinManhattanDistance(cell.r, cell.c);
                 cell.element.textContent = dist;
 
@@ -537,7 +659,6 @@
             isPlaying = false;
             clearInterval(timerId);
 
-            // 게임 종료 시 숨겨진 보물과 폭탄을 모두 공개
             treasures.forEach(t => {
                 const cell = grid[t.r][t.c];
                 if (!cell.revealed) {
@@ -562,16 +683,16 @@
             if (isWin) {
                 title.textContent = "🎉 보물 모두 발견! 대승리!";
                 title.style.color = "#fbbf24";
-                msg.textContent = `축하합니다! 폭탄을 피해 ${config.time - timeLeft}초 만에 모든 숨겨진 보물을 발굴했습니다! 논리적 추리력이 돋보였습니다!`;
+                msg.textContent = `축하합니다! 폭탄을 피해 ${config.time - timeLeft}초 만에 모든 숨겨진 보물을 발굴했습니다!`;
             } else {
                 if (reason === 'bomb') {
                     title.textContent = "💥 쾅! 폭탄 폭발! 게임 오버!";
                     title.style.color = "#ef4444";
-                    msg.textContent = `숨겨진 폭탄(💣)을 파내어 게임이 종료되었습니다! (발견한 보물: ${foundCount} / ${config.treasures}개) 다음번엔 힌트 숫자를 더 신중히 계산해보세요!`;
+                    msg.textContent = `숨겨진 폭탄(💣)을 파내어 게임이 종료되었습니다! (발견한 보물: ${foundCount} / ${config.treasures}개)`;
                 } else {
                     title.textContent = "💀 시간 종료! 탐사 실패";
                     title.style.color = "#ff5252";
-                    msg.textContent = `제한시간이 지났습니다. 총 ${config.treasures}개의 보물 중 ${foundCount}개를 찾았습니다. 다시 도전해보세요!`;
+                    msg.textContent = `제한시간이 지났습니다. 총 ${config.treasures}개의 보물 중 ${foundCount}개를 찾았습니다.`;
                 }
             }
 
@@ -582,7 +703,6 @@
             modal.style.display = 'none';
         }
 
-        // 초기 시작
         startGame();
     </script>
 </body>
