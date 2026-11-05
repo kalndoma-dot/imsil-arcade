@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>원 안에서 튀는 공</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, #1e1e2f 0%, #0c0c14 100%);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 원형 테두리 설정
+  function boundary() {
+    return {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      r: Math.min(canvas.width, canvas.height) * 0.4
+    };
+  }
+
+  const ball = {
+    x: canvas.width / 2 + 40,
+    y: canvas.height / 2 - 30,
+    r: 22,
+    vx: 6.5,
+    vy: 5.2,
+    hue: 0,
+    trail: []
+  };
+
+  function update() {
+    const b = boundary();
+
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // 원 중심으로부터의 거리
+    const dx = ball.x - b.x;
+    const dy = ball.y - b.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const maxDist = b.r - ball.r;
+
+    if (dist > maxDist) {
+      // 경계에 닿음 -> 법선 방향으로 반사
+      const nx = dx / dist;
+      const ny = dy / dist;
+
+      // 공을 경계 안쪽으로 보정
+      ball.x = b.x + nx * maxDist;
+      ball.y = b.y + ny * maxDist;
+
+      // 속도 반사: v' = v - 2(v·n)n
+      const dot = ball.vx * nx + ball.vy * ny;
+      ball.vx = ball.vx - 2 * dot * nx;
+      ball.vy = ball.vy - 2 * dot * ny;
+
+      // 튕길 때마다 색상 확 전환
+      ball.hue = (ball.hue + 47) % 360;
+    }
+
+    // 색은 계속 서서히 변화
+    ball.hue = (ball.hue + 1.2) % 360;
+
+    // 트레일
+    ball.trail.push({ x: ball.x, y: ball.y, hue: ball.hue });
+    if (ball.trail.length > 18) ball.trail.shift();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const b = boundary();
+
+    // 테두리 원 (글로우 효과)
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,255,255,0.5)';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.restore();
+
+    // 안쪽 은은한 배경
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r - 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fill();
+
+    // 트레일
+    for (let i = 0; i < ball.trail.length; i++) {
+      const p = ball.trail[i];
+      const alpha = (i + 1) / ball.trail.length * 0.35;
+      const radius = ball.r * ((i + 1) / ball.trail.length) * 0.75;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.hue}, 90%, 60%, ${alpha})`;
+      ctx.fill();
+    }
+
+    // 공
+    const gradient = ctx.createRadialGradient(
+      ball.x - ball.r * 0.3, ball.y - ball.r * 0.3, ball.r * 0.1,
+      ball.x, ball.y, ball.r
+    );
+    gradient.addColorStop(0, `hsl(${ball.hue}, 100%, 80%)`);
+    gradient.addColorStop(1, `hsl(${ball.hue}, 90%, 50%)`);
+
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = `hsl(${ball.hue}, 100%, 60%)`;
+    ctx.shadowBlur = 25;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+</script>
+</body>
+</html>

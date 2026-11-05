@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>네온 10초 스톱: 찰나의 승부</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Nanum+Gothic:wght@700;800&display=swap');
+
+    :root {
+      --neon-cyan: #00f2fe;
+      --neon-orange: #ff5e00;
+      --neon-pink: #ff007f;
+      --neon-green: #39ff14;
+      --neon-yellow: #fff200;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #06070a;
+      color: #f8fafc;
+      font-family: 'Orbitron', 'Nanum Gothic', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.05) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(255, 94, 0, 0.05) 0%, transparent 45%);
+    }
+
+    /* 게임기 본체 프레임 */
+    .arcade-frame {
+      position: relative;
+      width: 480px;
+      height: 720px;
+      background-color: #090a0f;
+      border: 3px solid rgba(255, 255, 255, 0.08);
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      padding: 25px;
+    }
+
+    /* 상단 모드 탭 셀렉터 */
+    .mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 30px;
+      z-index: 10;
+    }
+
+    .mode-btn {
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border: 2px solid #1e293b;
+      background-color: #0f172a;
+      color: #94a3b8;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Nanum Gothic', sans-serif;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-btn:hover {
+      border-color: var(--neon-cyan);
+      color: #fff;
+    }
+
+    .mode-btn.active {
+      background-color: rgba(0, 242, 254, 0.07);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.35);
+      text-shadow: 0 0 5px rgba(0, 242, 254, 0.3);
+    }
+
+    .mode-btn.active.hard-mode {
+      background-color: rgba(255, 94, 0, 0.07);
+      border-color: var(--neon-orange);
+      color: var(--neon-orange);
+      box-shadow: 0 0 15px rgba(255, 94, 0, 0.35);
+      text-shadow: 0 0 5px rgba(255, 94, 0, 0.3);
+    }
+
+    /* 전광판 디스플레이 보드 */
+    .display-board {
+      background-color: #030407;
+      border: 2px solid #1e293b;
+      border-radius: 20px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 25px;
+      box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+      min-height: 200px;
+    }
+
+    .display-board::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 4px, 6px 100%;
+      border-radius: 18px;
+      pointer-events: none;
+    }
+
+    .target-label {
+      font-size: 0.8rem;
+      color: #475569;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    /* 타이머 숫자 */
+    .stopwatch-digits {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 5rem;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
+      letter-spacing: 2px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .stopwatch-digits.hidden-timer {
+      color: #1e293b;
+      text-shadow: none;
+    }
+
+    .stopwatch-digits.running-hard {
+      color: var(--neon-orange);
+      text-shadow: 0 0 20px rgba(255, 94, 0, 0.5);
+    }
+
+    /* 오차 피드백 텍스트 */
+    .feedback-text {
+      height: 25px;
+      font-size: 0.95rem;
+      margin-top: 15px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .status-idle { color: #475569; }
+    .status-running { color: var(--neon-yellow); text-shadow: 0 0 8px rgba(255, 242, 0, 0.3); }
+    .status-perfect { color: var(--neon-green); text-shadow: 0 0 12px rgba(57, 255, 20, 0.6); }
+    .status-success { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 242, 254, 0.5); }
+    .status-fail { color: var(--neon-pink); text-shadow: 0 0 10px rgba(255, 0, 127, 0.5); }
+
+    /* 중앙 조작 버튼 구역 */
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 25px;
+      z-index: 10;
+    }
+
+    /* 대형 스톱워치 버튼 */
+    .trigger-btn {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 5px solid #1e293b;
+      background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+      color: #94a3b8;
+      font-size: 1.35rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    .trigger-btn:hover {
+      border-color: var(--neon-cyan);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(0, 242, 254, 0.25);
+    }
+
+    .trigger-btn.running {
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+      box-shadow: 0 0 30px rgba(255, 0, 127, 0.35);
+      animation: button-pulse 1s infinite alternate;
+    }
+
+    .trigger-btn.resetting {
+      border-color: var(--neon-yellow);
+      color: var(--neon-yellow);
+      box-shadow: 0 0 30px rgba(255, 242, 0, 0.35);
+    }
+
+    .trigger-btn:active {
+      transform: scale(0.94);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    }
+
+    /* 기록 판넬 */
+    .history-panel {
+      flex: 1;
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 18px 25px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 160px;
+      z-index: 10;
+    }
+
+    .history-title {
+      font-size: 0.8rem;
+      color: #64748b;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.03);
+    }
+
+    .history-item span.mode-lbl {
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .history-item span.diff-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+    }
+
+    .history-item.perfect span.diff-val { color: var(--neon-green); }
+    .history-item.success span.diff-val { color: var(--neon-cyan); }
+    .history-item.fail span.diff-val { color: var(--neon-pink); }
+
+    /* 불꽃 폭죽 파티클 캔버스 */
+    #celebrationCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      border-radius: 32px;
+    }
+
+    @keyframes button-pulse {
+      0% { box-shadow: 0 0 15px rgba(255, 0, 127, 0.25); }
+      100% { box-shadow: 0 0 35px rgba(255, 0, 127, 0.7); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="arcade-frame">
+    <!-- 폭죽 그래픽 용도 캔버스 -->
+    <canvas id="celebrationCanvas"></canvas>
+
+    <!-- 1. 난이도 셀렉터 -->
+    <div class="mode-selector">
+      <button class="mode-btn active" id="btn-easy" onclick="setDifficulty('easy')">쉬움 (숫자 노출)</button>
+      <button class="mode-btn" id="btn-hard" onclick="setDifficulty('hard')">어려움 (블라인드)</button>
+    </div>
+
+    <!-- 2. 전광판 보드 -->
+    <div class="display-board">
+      <div class="target-label" id="target-label-text">TARGET: 10.00 SEC</div>
+      <div class="stopwatch-digits" id="timer-display">00.00</div>
+      
+      <!-- 성공/실패 문구 출력 영역 -->
+      <div class="feedback-text status-idle" id="feedback-display">READY TO START</div>
+    </div>
+
+    <!-- 3. 대형 조작 스위치 버튼 -->
+    <div class="btn-container">
+      <button class="trigger-btn" id="action-btn" onclick="handleBtnTrigger()">START</button>
+    </div>
+
+    <!-- 4. 기록 아카이브 보드 -->
+    <div class="history-panel">
+      <div class="history-title">최근 5회 도전 기록</div>
+      <ul class="history-list" id="history-box">
+        <li class="history-item"><span style="color:#475569;">도전 기록이 없습니다.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Web Audio API 효과음 엔진
+    let audioCtx = null;
+
+    function initAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // 스타트 클릭
+    function playStartClick() {
+      initAudio();
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.06);
+    }
+
+    // 똑딱 초침 클릭음 (1초마다 울림)
+    function playTickSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    // 성공 축하 벨 소리
+    function playSuccessChime() {
+      if (!audioCtx) return;
+      const playBell = (freq, delay) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.45);
+      };
+      playBell(523.25, 0);     // C5
+      playBell(659.25, 0.1);   // E5
+      playBell(783.99, 0.2);   // G5
+      playBell(1046.50, 0.3);  // C6
+    }
+
+    // 퍼펙트 축하 사운드 (우렁찬 팡파레)
+    function playPerfectFanfare() {
+      if (!audioCtx) return;
+      const playHorn = (freq, delay, dur) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, audioCtx.currentTime + delay);
+
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime + delay);
+        gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + delay + dur - 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + dur + 0.02);
+      };
+      playHorn(523.25, 0, 0.2);   // C5
+      playHorn(523.25, 0.2, 0.2); // C5
+      playHorn(523.25, 0.4, 0.2); // C5
+      playHorn(659.25, 0.6, 0.4); // E5
+      playHorn(523.25, 0.8, 0.2); // C5
+      playHorn(659.25, 1.0, 0.8); // E5
+    }
+
+    // 실패 버저
+    function playFailBuzzer() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(130, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(95, audioCtx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.36);
+    }
+
+
+    // --- 게임 상태 관리 ---
+    let difficulty = 'easy'; // 'easy' 또는 'hard'
+    let state = 'idle'; // 'idle', 'running', 'stopped'
+    let startTime = 0;
+    let stopTime = 0;
+    let timerInterval = null;
+    let ticksPlayed = {}; // 각 정각 초 클릭음 카운트 확인용
+
+    const timerDisplay = document.getElementById('timer-display');
+    const feedbackDisplay = document.getElementById('feedback-display');
+    const actionBtn = document.getElementById('action-btn');
+
+    let historyRecords = [];
+
+    // 파티클 불꽃 폭발 엔진
+    const canvas = document.getElementById('celebrationCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function setDifficulty(mode) {
+      if (state === 'running') return; // 게임 실행 중에는 난이도 변경 차단
+      
+      difficulty = mode;
+      
+      document.getElementById('btn-easy').classList.remove('active');
+      document.getElementById('btn-hard').classList.remove('active', 'hard-mode');
+
+      if (mode === 'easy') {
+        document.getElementById('btn-easy').classList.add('active');
+        timerDisplay.classList.remove('running-hard');
+        timerDisplay.innerText = "00.00";
+      } else {
+        document.getElementById('btn-hard').classList.add('active', 'hard-mode');
+        timerDisplay.innerText = "00.00";
+      }
+
+      resetWatch();
+    }
+
+    function resetWatch() {
+      state = 'idle';
+      timerDisplay.innerText = "00.00";
+      timerDisplay.classList.remove('hidden-timer', 'running-hard');
+      feedbackDisplay.innerText = "READY TO START";
+      feedbackDisplay.className = "feedback-text status-idle";
+      actionBtn.innerText = "START";
+      actionBtn.className = "trigger-btn";
+      ticksPlayed = {};
+    }
+
+    function handleBtnTrigger() {
+      initAudio();
+      if (state === 'idle') {
+        // --- 스톱워치 시작 ---
+        state = 'running';
+        playStartClick();
+        
+        startTime = performance.now();
+        actionBtn.innerText = "STOP";
+        actionBtn.className = "trigger-btn running";
+        
+        feedbackDisplay.innerText = "MEASURING TIME...";
+        feedbackDisplay.className = "feedback-text status-running";
+
+        if (difficulty === 'hard') {
+          timerDisplay.classList.add('running-hard');
+        }
+
+        ticksPlayed = {};
+        timerInterval = requestAnimationFrame(updateTimer);
+      } 
+      else if (state === 'running') {
+        // --- 스톱워치 멈춤 (판정 구역) ---
+        state = 'stopped';
+        stopTime = performance.now();
+        cancelAnimationFrame(timerInterval);
+
+        const elapsedTime = (stopTime - startTime) / 1000;
+        timerDisplay.innerText = elapsedTime.toFixed(2);
+        timerDisplay.classList.remove('hidden-timer', 'running-hard');
+
+        actionBtn.innerText = "RESET";
+        actionBtn.className = "trigger-btn resetting";
+
+        checkResult(elapsedTime);
+      } 
+      else if (state === 'stopped') {
+        // --- 리셋 ---
+        resetWatch();
+      }
+    }
+
+    // 부드러운 하이 레졸루션 타이머 갱신 루프
+    function updateTimer() {
+      if (state !== 'running') return;
+
+      const current = performance.now();
+      const elapsed = (current - startTime) / 1000;
+
+      // 난이도별 타이머 숫자 비주얼 처리
+      if (difficulty === 'easy') {
+        timerDisplay.innerText = elapsed.toFixed(2);
+      } else {
+        // 어려움 모드: 3초가 지나면 물음표 블라인드 처리 적용
+        if (elapsed >= 3.0) {
+          timerDisplay.innerText = "??.??";
+          timerDisplay.classList.add('hidden-timer');
+        } else {
+          timerDisplay.innerText = elapsed.toFixed(2);
+        }
+      }
+
+      // 초당 똑딱음 효과음 처리
+      const currentSec = Math.floor(elapsed);
+      if (currentSec > 0 && !ticksPlayed[currentSec]) {
+        ticksPlayed[currentSec] = true;
+        playTickSound();
+      }
+
+      timerInterval = requestAnimationFrame(updateTimer);
+    }
+
+    // 성공/실패 규칙 판정
+    function checkResult(elapsed) {
+      const diff = elapsed - 10.00;
+      const absDiff = Math.abs(diff);
+
+      let successType = 'fail';
+      let title = '';
+      let styleClass = '';
+
+      if (difficulty === 'easy') {
+        // 쉬움 모드 허용 오차: 9.95 ~ 10.05초
+        if (absDiff === 0) {
+          successType = 'perfect';
+          title = "PERFECT 10.00!!!";
+          styleClass = "status-perfect";
+          playPerfectFanfare();
+          triggerCelebration(2); // 대규모 불꽃 폭죽
+        } else if (absDiff <= 0.05) {
+          successType = 'success';
+          title = `SUCCESS! (오차: ${diff > 0 ? '+' : ''}${diff.toFixed(2)}s)`;
+          styleClass = "status-success";
+          playSuccessChime();
+          triggerCelebration(1); // 일반 축하 폭죽
+        } else {
+          successType = 'fail';
+          title = `FAIL (오차: ${diff > 0 ? '+' : ''}${diff.toFixed(2)}s)`;
+          styleClass = "status-fail";
+          playFailBuzzer();
+        }
+      } else {
+        // 어려움 모드 허용 오차: 9.98 ~ 10.02초 (극도로 제한적)
+        if (absDiff === 0) {
+          successType = 'perfect';
+          title = "PERFECT 10.00!!!";
+          styleClass = "status-perfect";
+          playPerfectFanfare();
+          triggerCelebration(3); // 초대규모 축포
+        } else if (absDiff <= 0.02) {
+          successType = 'success';
+          title = `SUCCESS! (오차: ${diff > 0 ? '+' : ''}${diff.toFixed(2)}s)`;
+          styleClass = "status-success";
+          playSuccessChime();
+          triggerCelebration(2); // 대규모 축포
+        } else {
+          successType = 'fail';
+          title = `FAIL (오차: ${diff > 0 ? '+' : ''}${diff.toFixed(2)}s)`;
+          styleClass = "status-fail";
+          playFailBuzzer();
+        }
+      }
+
+      feedbackDisplay.innerText = title;
+      feedbackDisplay.className = `feedback-text ${styleClass}`;
+
+      // 기록 아카이빙 적재
+      addHistory(difficulty, elapsed, diff, successType);
+    }
+
+    // 시도 이력 추가 함수
+    function addHistory(mode, stoppedAt, diff, status) {
+      historyRecords.unshift({
+        mode: mode === 'easy' ? '쉬움' : '어려움',
+        time: stoppedAt.toFixed(2),
+        diff: (diff > 0 ? '+' : '') + diff.toFixed(2),
+        status: status
+      });
+
+      if (historyRecords.length > 5) historyRecords.pop();
+
+      updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+      const box = document.getElementById('history-box');
+      box.innerHTML = '';
+
+      historyRecords.forEach(rec => {
+        const li = document.createElement('li');
+        li.className = `history-item ${rec.status}`;
+        
+        let statText = '실패';
+        if (rec.status === 'perfect') statText = '🏆 퍼펙트!';
+        else if (rec.status === 'success') statText = '성공';
+
+        li.innerHTML = `
+          <div>
+            <span class="mode-lbl">[${rec.mode}]</span> 
+            <span>${rec.time}초 </span>
+            <span style="font-size:0.75rem; color:#475569;">(${statText})</span>
+          </div>
+          <span class="diff-val">${rec.diff}s</span>
+        `;
+        box.appendChild(li);
+      });
+    }
+
+    // --- 폭죽 축포 렌더링 프레임워크 ---
+    function triggerCelebration(level) {
+      const count = level * 30;
+      const colors = ['#00f2fe', '#ff007f', '#39ff14', '#fff200', '#ff00ff'];
+
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI - Math.PI; // 위쪽 분사
+        const speed = Math.random() * 8 + 4;
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height - 200,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - (Math.random() * 3), // 수직 부력 가중치
+          size: Math.random() * 6 + 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: Math.random() * 45 + 30,
+          gravity: 0.18
+        });
+      }
+    }
+
+    function updateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.life--;
+
+        ctx.save();
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = p.life / 75;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(updateParticles);
+    }
+
+    // 폭죽 루프 발동
+    updateParticles();
+  </script>
+</body>
+</html>

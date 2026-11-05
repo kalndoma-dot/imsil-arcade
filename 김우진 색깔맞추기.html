@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>색상 순서 맞추기 게임</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        #status {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            min-height: 1.5em;
+            color: #ffeb3b;
+        }
+
+        /* 난이도 선택 버튼 */
+        .difficulty-container {
+            margin-bottom: 20px;
+        }
+
+        .diff-btn {
+            padding: 10px 18px;
+            margin: 0 5px;
+            font-size: 1rem;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: #3a3f58;
+            color: #fff;
+            transition: all 0.2s;
+        }
+
+        .diff-btn:hover {
+            background-color: #4a5173;
+        }
+
+        .diff-btn.active {
+            border-color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 게임 패드 그리드 */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(2, 140px);
+            grid-gap: 20px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .color-pad {
+            width: 140px;
+            height: 140px;
+            border-radius: 15px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .color-pad:active {
+            transform: scale(0.95);
+        }
+
+        /* 색상 정의 */
+        #red { background-color: #ff5252; }
+        #blue { background-color: #448aff; }
+        #green { background-color: #69f0ae; }
+        #yellow { background-color: #ffd740; }
+
+        /* 패드 점등 및 클릭 액티브 효과 */
+        .color-pad.active {
+            opacity: 1 !important;
+            box-shadow: 0 0 25px currentColor;
+        }
+
+        /* 컨트롤 버튼 */
+        #start-btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: #00e676;
+            border: none;
+            border-radius: 25px;
+            color: #1e1e2f;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,230,118,0.3);
+        }
+
+        #start-btn:hover {
+            background-color: #00c853;
+        }
+
+        #start-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🧠 색상 순서 맞추기</h1>
+    <p>제시되는 색상 순서를 기억한 뒤 순서대로 클릭하세요! (총 10라운드)</p>
+
+    <!-- 난이도 선택 -->
+    <div class="difficulty-container">
+        <button class="diff-btn active" onclick="setDifficulty('easy')">쉬움</button>
+        <button class="diff-btn" onclick="setDifficulty('normal')">보통</button>
+        <button class="diff-btn" onclick="setDifficulty('hard')">어려움</button>
+        <button class="diff-btn" onclick="setDifficulty('extreme')">익스트림</button>
+    </div>
+
+    <div id="status">난이도를 선택하고 게임 시작을 누르세요.</div>
+
+    <!-- 색상 패드 -->
+    <div class="game-board">
+        <div class="color-pad" id="red" onclick="handlePadClick('red')"></div>
+        <div class="color-pad" id="blue" onclick="handlePadClick('blue')"></div>
+        <div class="color-pad" id="green" onclick="handlePadClick('green')"></div>
+        <div class="color-pad" id="yellow" onclick="handlePadClick('yellow')"></div>
+    </div>
+
+    <button id="start-btn" onclick="startGame()">게임 시작</button>
+
+    <script>
+        const colors = ['red', 'blue', 'green', 'yellow'];
+        let sequence = [];
+        let playerSequence = [];
+        let round = 0;
+        let isPlaying = false;
+        let isDisplayingSequence = false;
+
+        // 난이도별 속도 설정 (ms)
+        const difficultySettings = {
+            easy: { flashDuration: 600, delay: 400 },
+            normal: { flashDuration: 450, delay: 250 },
+            hard: { flashDuration: 300, delay: 150 },
+            extreme: { flashDuration: 180, delay: 80 }
+        };
+
+        let currentDifficulty = 'easy';
+
+        function setDifficulty(diff) {
+            if (isPlaying) return;
+            currentDifficulty = diff;
+            
+            document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function startGame() {
+            sequence = [];
+            playerSequence = [];
+            round = 0;
+            isPlaying = true;
+            document.getElementById('start-btn').disabled = true;
+            nextRound();
+        }
+
+        function nextRound() {
+            round++;
+            playerSequence = [];
+            document.getElementById('status').textContent = `라운드 ${round} / 10 - 색상을 기억하세요!`;
+
+            // 랜덤 색상 1개 추가
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            sequence.push(randomColor);
+
+            // 제시되는 동안 클릭 방지
+            isDisplayingSequence = true;
+            playSequence();
+        }
+
+        function playSequence() {
+            let i = 0;
+            const config = difficultySettings[currentDifficulty];
+
+            const interval = setInterval(() => {
+                flashPad(sequence[i]);
+                i++;
+
+                if (i >= sequence.length) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        isDisplayingSequence = false;
+                        document.getElementById('status').textContent = `라운드 ${round} / 10 - 순서대로 클릭하세요!`;
+                    }, config.flashDuration);
+                }
+            }, config.flashDuration + config.delay);
+        }
+
+        function flashPad(color) {
+            const pad = document.getElementById(color);
+            pad.classList.add('active');
+            setTimeout(() => {
+                pad.classList.remove('active');
+            }, difficultySettings[currentDifficulty].flashDuration);
+        }
+
+        function handlePadClick(color) {
+            if (!isPlaying || isDisplayingSequence) return;
+
+            flashPad(color);
+            playerSequence.push(color);
+
+            const currentIndex = playerSequence.length - 1;
+
+            // 틀렸는지 검사
+            if (playerSequence[currentIndex] !== sequence[currentIndex]) {
+                gameOver(false);
+                return;
+            }
+
+            // 현재 라운드 성공 검사
+            if (playerSequence.length === sequence.length) {
+                if (round === 10) {
+                    gameOver(true); // 10라운드 완전 클리어
+                } else {
+                    isDisplayingSequence = true;
+                    document.getElementById('status').textContent = `성공! 다음 라운드로 이동합니다...`;
+                    setTimeout(nextRound, 1000);
+                }
+            }
+        }
+
+        function gameOver(isWin) {
+            isPlaying = false;
+            document.getElementById('start-btn').disabled = false;
+
+            if (isWin) {
+                document.getElementById('status').textContent = `🎉 축하합니다! 10번 모두 맞춰서 승리했습니다! (${currentDifficulty.toUpperCase()} 클리어)`;
+            } else {
+                document.getElementById('status').textContent = `❌ 틀렸습니다! (${round} 라운드에서 탈락) 다시 도전해보세요!`;
+            }
+        }
+    </script>
+</body>
+</html>

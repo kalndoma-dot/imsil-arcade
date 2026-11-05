@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>바다의 상어</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    background: #04263d;
+    font-family: 'Malgun Gothic', sans-serif;
+  }
+  canvas {
+    display: block;
+    cursor: crosshair;
+  }
+  #hud {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    color: #eafcff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    pointer-events: none;
+  }
+  #hud .score {
+    font-size: 22px;
+    font-weight: bold;
+  }
+  #hud .size {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: rgba(2, 14, 26, 0.75);
+    color: #eafcff;
+    text-align: center;
+  }
+  #overlay h1 {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  #overlay p {
+    font-size: 16px;
+    opacity: 0.85;
+    margin-bottom: 20px;
+  }
+  #overlay button {
+    padding: 10px 28px;
+    font-size: 16px;
+    border: none;
+    border-radius: 30px;
+    background: #ff5533;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  #overlay button:hover {
+    background: #ff7755;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="hud">
+  <div class="score">점수: 0</div>
+  <div class="size">상어 크기: 20</div>
+</div>
+<div id="overlay">
+  <h1>게임 오버</h1>
+  <p>더 큰 상어나 고래에게 당했습니다!</p>
+  <button id="restartBtn">다시 시작</button>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const hudScore = document.querySelector('#hud .score');
+const hudSize = document.querySelector('#hud .size');
+const overlay = document.getElementById('overlay');
+const restartBtn = document.getElementById('restartBtn');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---------- 입력 ----------
+const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+canvas.addEventListener('mousemove', (e) => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+canvas.addEventListener('touchmove', (e) => {
+  const t = e.touches[0];
+  mouse.x = t.clientX;
+  mouse.y = t.clientY;
+  e.preventDefault();
+}, { passive: false });
+
+const keys = {};
+window.addEventListener('keydown', (e) => keys[e.key] = true);
+window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+// ---------- 상태 ----------
+let player, creatures, bubbles, score, running;
+
+function initGame() {
+  player = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 22,
+    angle: 0,
+    speed: 3.2
+  };
+  creatures = [];
+  bubbles = [];
+  score = 0;
+  running = true;
+  overlay.style.display = 'none';
+  for (let i = 0; i < 25; i++) spawnBubble(true);
+  updateHud();
+}
+
+function updateHud() {
+  hudScore.textContent = `점수: ${score}`;
+  hudSize.textContent = `상어 크기: ${Math.round(player.radius)}`;
+}
+
+// ---------- 생물 정의 ----------
+const TYPES = {
+  fish: { minR: 8, maxR: 14, speed: 2.2, color: ['#ffd93d', '#ff8c42'], score: 10, growth: 2, max: 18 },
+  shark: { minR: 14, maxR: 34, speed: 1.8, color: ['#9aa5b1', '#5c6b73'], score: 50, growth: 6, max: 6 },
+  whale: { minR: 55, maxR: 75, speed: 0.8, color: ['#6fb1e0', '#2f5f8a'], score: 200, growth: 18, max: 3 }
+};
+
+function spawnCreature(type) {
+  const def = TYPES[type];
+  const radius = def.minR + Math.random() * (def.maxR - def.minR);
+  const edge = Math.floor(Math.random() * 4);
+  let x, y;
+  if (edge === 0) { x = -radius; y = Math.random() * canvas.height; }
+  else if (edge === 1) { x = canvas.width + radius; y = Math.random() * canvas.height; }
+  else if (edge === 2) { x = Math.random() * canvas.width; y = -radius; }
+  else { x = Math.random() * canvas.width; y = canvas.height + radius; }
+
+  const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x) + (Math.random() - 0.5) * 1.2;
+
+  creatures.push({
+    type, x, y, radius,
+    angle,
+    speed: def.speed * (0.7 + Math.random() * 0.6),
+    wanderTimer: 0
+  });
+}
+
+function spawnBubble(randomY) {
+  bubbles.push({
+    x: Math.random() * canvas.width,
+    y: randomY ? Math.random() * canvas.height : canvas.height + 10,
+    r: 2 + Math.random() * 5,
+    speed: 0.4 + Math.random() * 0.8
+  });
+}
+
+// 종류별로 개체 수를 유지하며 지속적으로 스폰
+setInterval(() => {
+  if (!running) return;
+  for (const type of Object.keys(TYPES)) {
+    const count = creatures.filter(c => c.type === type).length;
+    if (count < TYPES[type].max) spawnCreature(type);
+  }
+}, 900);
+
+// ---------- 업데이트 ----------
+function updatePlayer() {
+  let dx = 0, dy = 0;
+  if (keys['ArrowUp'] || keys['w']) dy -= 1;
+  if (keys['ArrowDown'] || keys['s']) dy += 1;
+  if (keys['ArrowLeft'] || keys['a']) dx -= 1;
+  if (keys['ArrowRight'] || keys['d']) dx += 1;
+
+  let targetAngle;
+  if (dx !== 0 || dy !== 0) {
+    targetAngle = Math.atan2(dy, dx);
+  } else {
+    targetAngle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+  }
+
+  let diff = targetAngle - player.angle;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  player.angle += diff * 0.15;
+
+  const dist = Math.hypot(mouse.x - player.x, mouse.y - player.y);
+  const moving = (dx !== 0 || dy !== 0) || dist > 8;
+  if (moving) {
+    player.x += Math.cos(player.angle) * player.speed;
+    player.y += Math.sin(player.angle) * player.speed;
+  }
+
+  player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+  player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+}
+
+function updateCreatures() {
+  for (const c of creatures) {
+    // 플레이어보다 작은 개체는 도망, 큰 개체는 서서히 배회
+    const dist = Math.hypot(player.x - c.x, player.y - c.y);
+    const fleeRange = 160;
+
+    if (c.radius < player.radius && dist < fleeRange) {
+      const away = Math.atan2(c.y - player.y, c.x - player.x);
+      c.angle += (away - c.angle) * 0.08;
+    } else {
+      c.wanderTimer -= 1;
+      if (c.wanderTimer <= 0) {
+        c.angle += (Math.random() - 0.5) * 1.0;
+        c.wanderTimer = 40 + Math.random() * 60;
+      }
+    }
+
+    c.x += Math.cos(c.angle) * c.speed;
+    c.y += Math.sin(c.angle) * c.speed;
+
+    // 화면 밖으로 너무 멀리 나가면 반대편에서 재진입하도록 각도 보정
+    const margin = 80;
+    if (c.x < -margin || c.x > canvas.width + margin || c.y < -margin || c.y > canvas.height + margin) {
+      c.angle = Math.atan2(canvas.height / 2 - c.y, canvas.width / 2 - c.x) + (Math.random() - 0.5) * 0.6;
+    }
+  }
+
+  // 플레이어와 충돌 판정
+  for (let i = creatures.length - 1; i >= 0; i--) {
+    const c = creatures[i];
+    const dist = Math.hypot(player.x - c.x, player.y - c.y);
+    if (dist < player.radius * 0.7 + c.radius * 0.7) {
+      const def = TYPES[c.type];
+      if (player.radius > c.radius * 1.05) {
+        // 플레이어가 먹음
+        player.radius += def.growth;
+        player.radius = Math.min(player.radius, 90);
+        score += def.score;
+        creatures.splice(i, 1);
+        updateHud();
+      } else if (c.radius > player.radius * 1.05) {
+        // 플레이어 사망
+        gameOver();
+        return;
+      }
+    }
+  }
+}
+
+function updateBubbles() {
+  for (const b of bubbles) {
+    b.y -= b.speed;
+    if (b.y < -10) {
+      b.y = canvas.height + 10;
+      b.x = Math.random() * canvas.width;
+    }
+  }
+}
+
+function gameOver() {
+  running = false;
+  overlay.style.display = 'flex';
+}
+
+// ---------- 그리기 ----------
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#0a3a5c');
+  grad.addColorStop(1, '#021420');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  for (const b of bubbles) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawFishShape(x, y, angle, radius, colorHead, colorTail) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // 꼬리
+  ctx.beginPath();
+  ctx.moveTo(-radius * 1.0, 0);
+  ctx.lineTo(-radius * 1.7, -radius * 0.7);
+  ctx.lineTo(-radius * 1.7, radius * 0.7);
+  ctx.closePath();
+  ctx.fillStyle = colorTail;
+  ctx.fill();
+
+  // 몸통
+  ctx.beginPath();
+  ctx.ellipse(0, 0, radius, radius * 0.6, 0, 0, Math.PI * 2);
+  const g = ctx.createLinearGradient(-radius, 0, radius, 0);
+  g.addColorStop(0, colorTail);
+  g.addColorStop(1, colorHead);
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  // 눈
+  ctx.beginPath();
+  ctx.arc(radius * 0.6, -radius * 0.15, radius * 0.12, 0, Math.PI * 2);
+  ctx.fillStyle = '#0a1620';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCreature(c) {
+  const def = TYPES[c.type];
+  drawFishShape(c.x, c.y, c.angle, c.radius, def.color[0], def.color[1]);
+}
+
+function drawPlayer() {
+  drawFishShape(player.x, player.y, player.angle, player.radius, '#e0e0e0', '#7f8c94');
+
+  // 상어 등지느러미
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.rotate(player.angle);
+  ctx.beginPath();
+  ctx.moveTo(0, -player.radius * 0.5);
+  ctx.lineTo(player.radius * 0.35, -player.radius * 1.3);
+  ctx.lineTo(player.radius * 0.7, -player.radius * 0.5);
+  ctx.closePath();
+  ctx.fillStyle = '#7f8c94';
+  ctx.fill();
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  for (const c of creatures) drawCreature(c);
+  drawPlayer();
+}
+
+function loop() {
+  if (running) {
+    updatePlayer();
+    updateCreatures();
+  }
+  updateBubbles();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+restartBtn.addEventListener('click', initGame);
+
+initGame();
+loop();
+</script>
+</body>
+</html>

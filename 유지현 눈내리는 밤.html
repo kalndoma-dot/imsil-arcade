@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snow Accumulation Animation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-family: 'Arial', 'Malgun Gothic', sans-serif;
+            z-index: 10;
+            position: absolute;
+            top: 35%;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        h1 span {
+            font-size: 5rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <h1><span>Good Night & Happy<br>Winter</span></h1>
+    <canvas id="snowCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initSnowGround();
+        });
+
+        // 눈 쌓임 레이어 데이터
+        let snowGround = [];
+        const maxAccumulation = 150; // 최대 쌓일 높이(px)
+
+        function initSnowGround() {
+            snowGround = new Array(width).fill(0);
+        }
+        initSnowGround();
+
+        // 눈송이 객체
+        const snowflakes = [];
+        const maxSnowflakes = 150;
+
+        class Snowflake {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -10;
+                this.size = Math.random() * 3 + 2; // 눈 송이 크기
+                this.speed = Math.random() * 1.5 + 0.8; // 내리는 속도
+                this.velX = Math.random() * 0.5 - 0.25; // 바람 영향
+                this.opacity = Math.random() * 0.7 + 0.3;
+            }
+
+            update() {
+                this.y += this.speed;
+                this.x += this.velX;
+
+                // 화면 밖으로 나가면 재배치
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+
+                // 바닥 도착 및 쌓임 검사
+                const groundIdx = Math.floor(this.x);
+                const currentGroundHeight = snowGround[groundIdx] || 0;
+                
+                if (this.y >= height - currentGroundHeight) {
+                    // 눈이 쌓이도록 바닥 높이 증가
+                    if (currentGroundHeight < maxAccumulation) {
+                        // 주변 반경에 눈을 넓게 적재
+                        const radius = Math.floor(this.size * 2);
+                        for (let i = -radius; i <= radius; i++) {
+                            const idx = groundIdx + i;
+                            if (idx >= 0 && idx < width) {
+                                snowGround[idx] += (1 - Math.abs(i) / radius) * 0.4;
+                            }
+                        }
+                    }
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.fill();
+            }
+        }
+
+        // 눈송이 생성
+        for (let i = 0; i < maxSnowflakes; i++) {
+            snowflakes.push(new Snowflake());
+        }
+
+        // 쌓인 눈 그리기
+        function drawSnowGround() {
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+
+            for (let x = 0; x < width; x++) {
+                ctx.lineTo(x, height - snowGround[x]);
+            }
+
+            ctx.lineTo(width, height);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fill();
+        }
+
+        // 메인 애니메이션 루프
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 쌓인 눈 그리기
+            drawSnowGround();
+
+            // 눈송이 이동 및 그리기
+            snowflakes.forEach(flake => {
+                flake.update();
+                flake.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

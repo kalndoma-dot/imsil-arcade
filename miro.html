@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>백룸 탈출: 보스 배틀 (Escape from Dark Verity)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Jua&family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --backrooms-yellow: #d1b87a;
+      --backrooms-dark: #3a321a;
+      --horror-red: #8b0000;
+      --neon-red: #ff3333;
+      --god-purple: #c084fc;
+      --neon-purple: #a855f7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #0d0d0c;
+      color: #eaeaea;
+      font-family: 'Share Tech Mono', 'Jua', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .screen-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* 1. 메인 메뉴 화면 */
+    #menu-screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #181610 0%, #0d0d0c 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      transition: opacity 0.5s ease;
+    }
+
+    .neon-flicker-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(209, 184, 122, 0.02);
+      pointer-events: none;
+      animation: ambient-flicker 8s infinite;
+      z-index: 1;
+    }
+
+    h1.title {
+      font-family: 'Creepster', cursive;
+      font-size: 4.5rem;
+      color: var(--backrooms-yellow);
+      text-shadow: 0 0 10px rgba(209, 184, 122, 0.3), 3px 3px 0px #000;
+      margin-bottom: 5px;
+      letter-spacing: 2px;
+      z-index: 2;
+      animation: glitch-text 3s infinite;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #8c8570;
+      margin-bottom: 40px;
+      letter-spacing: 4px;
+      z-index: 2;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* 난이도 선택 영역 */
+    .difficulty-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      z-index: 2;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .diff-label {
+      font-size: 1.1rem;
+      color: #a49e8d;
+      margin-bottom: 5px;
+    }
+
+    .diff-buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      width: 100%;
+      padding: 0 10px;
+    }
+
+    .diff-btn {
+      padding: 12px 2px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border: 2px solid #544d3b;
+      background-color: #242118;
+      color: #c4beb0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Jua', sans-serif;
+    }
+
+    .diff-btn:hover {
+      background-color: #3b3727;
+      border-color: var(--backrooms-yellow);
+      color: #fff;
+    }
+
+    .diff-btn.active {
+      background-color: var(--backrooms-yellow);
+      border-color: #fff;
+      color: #1a1811;
+      box-shadow: 0 0 15px rgba(209, 184, 122, 0.4);
+    }
+
+    .diff-btn.active.hell-mode {
+      background-color: var(--horror-red);
+      color: #fff;
+      border-color: var(--neon-red);
+      animation: pulse-red 1s infinite alternate;
+      box-shadow: 0 0 15px rgba(255, 51, 51, 0.6);
+    }
+
+    .diff-btn.active.god-mode {
+      background-color: var(--neon-purple);
+      color: #fff;
+      border-color: var(--god-purple);
+      animation: pulse-purple 0.8s infinite alternate;
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.7);
+    }
+
+    .start-btn {
+      margin-top: 40px;
+      padding: 15px 50px;
+      font-size: 1.5rem;
+      font-family: 'Jua', sans-serif;
+      font-weight: bold;
+      background-color: #1a1811;
+      border: 3px solid var(--backrooms-yellow);
+      color: var(--backrooms-yellow);
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 2;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .start-btn:hover {
+      background-color: var(--backrooms-yellow);
+      color: #1a1811;
+      box-shadow: 0 0 25px rgba(209, 184, 122, 0.5);
+      transform: translateY(-2px);
+    }
+
+    /* 2. 게임 플레이 화면 */
+    #game-screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background-color: #000;
+    }
+
+    #gameCanvas {
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      max-width: 100%;
+      max-height: 100%;
+      cursor: crosshair;
+    }
+
+    /* 상단 상태 바 */
+    .hud-bar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 30px;
+      background: rgba(20, 20, 18, 0.85);
+      border: 1px solid var(--backrooms-yellow);
+      padding: 10px 25px;
+      border-radius: 20px;
+      font-size: 1.1rem;
+      z-index: 5;
+      pointer-events: none;
+      letter-spacing: 1px;
+    }
+
+    .hud-item span {
+      color: var(--backrooms-yellow);
+      font-weight: bold;
+    }
+
+    /* 체력 바 HUD (보스전 전용) */
+    .health-container {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      width: 320px;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .hp-bar-wrapper {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      height: 18px;
+      position: relative;
+    }
+
+    .hp-bar-inner {
+      height: 100%;
+      width: 100%;
+      transition: width 0.15s ease-out;
+    }
+
+    .hp-bar-inner.player { background-color: var(--neon-red); }
+    .hp-bar-inner.boss { background-color: var(--neon-purple); }
+
+    .hp-label {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      line-height: 16px;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    /* 점프스케어 오버레이 */
+    #jumpscare-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .blood-flash {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(139,0,0,0.85) 0%, rgba(0,0,0,1) 80%);
+      pointer-events: none;
+      animation: flash-red 0.15s infinite alternate;
+    }
+
+    .jumpscare-face-container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: shake-face 0.05s infinite alternate;
+    }
+
+    #jumpscare-face-canvas {
+      width: 100%;
+      height: 100%;
+      filter: contrast(3) brightness(0.8) hue-rotate(-20deg);
+    }
+
+    .jumpscare-text {
+      font-family: 'Creepster', cursive;
+      font-size: 5rem;
+      color: #ff0000;
+      text-shadow: 0 0 20px #ff0000, 3px 3px 0px #000;
+      z-index: 102;
+      margin-top: 20px;
+      letter-spacing: 5px;
+      animation: scale-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* 결과/엔딩 오버레이 */
+    .result-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(13, 13, 12, 0.95);
+      z-index: 20;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .result-title {
+      font-family: 'Creepster', cursive;
+      font-size: 4rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+
+    .result-title.win {
+      color: #ffb300;
+      text-shadow: 0 0 20px rgba(255, 179, 0, 0.5);
+    }
+
+    .result-title.lose {
+      color: var(--horror-red);
+      text-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+    }
+
+    .result-stats {
+      font-size: 1.2rem;
+      color: #b0ab9c;
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .action-btn {
+      padding: 12px 35px;
+      font-size: 1.2rem;
+      font-family: 'Jua', sans-serif;
+      border: 2px solid var(--backrooms-yellow);
+      background-color: #1a1811;
+      color: var(--backrooms-yellow);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background-color: var(--backrooms-yellow);
+      color: #111;
+      box-shadow: 0 0 15px var(--backrooms-yellow);
+    }
+
+    .controls-indicator {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.85rem;
+      color: #6d6756;
+      background: rgba(10,10,8,0.75);
+      padding: 8px 20px;
+      border-radius: 30px;
+      border: 1px solid rgba(209,184,122,0.15);
+      z-index: 5;
+      letter-spacing: 1px;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    kbd {
+      background: #24221a;
+      border: 1px solid #544e3d;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      color: #fff;
+    }
+
+    /* Animations */
+    @keyframes ambient-flicker {
+      0%, 100% { opacity: 0.9; }
+      20% { opacity: 0.9; }
+      21% { opacity: 0.3; }
+      22% { opacity: 0.9; }
+      40% { opacity: 0.9; }
+      41% { opacity: 0.2; }
+      43% { opacity: 0.8; }
+      44% { opacity: 0.1; }
+      45% { opacity: 0.9; }
+      80% { opacity: 0.9; }
+      81% { opacity: 0.4; }
+      82% { opacity: 0.9; }
+    }
+
+    @keyframes glitch-text {
+      0%, 100% { transform: translate(0); }
+      1% { transform: translate(-2px, 2px) skewX(2deg); }
+      2% { transform: translate(2px, -2px) skewY(-2deg); }
+      3% { transform: translate(0); }
+      50% { transform: translate(0); }
+      51% { transform: translate(1.5px, 1.5px); }
+      52% { transform: translate(-1.5px, -1.5px); }
+      53% { transform: translate(0); }
+    }
+
+    @keyframes flash-red {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes shake-face {
+      0% { transform: translate(2px, 2px) rotate(0deg) scale(1.1); }
+      10% { transform: translate(-2px, -3px) rotate(-1deg) scale(1.2); }
+      20% { transform: translate(-3px, 0px) rotate(1deg) scale(1.05); }
+      30% { transform: translate(0px, 2px) rotate(0deg) scale(1.15); }
+      40% { transform: translate(1px, -1px) rotate(1deg) scale(1.1); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg) scale(1.2); }
+      60% { transform: translate(-3px, 1px) rotate(0deg) scale(1.15); }
+      70% { transform: translate(2px, 1px) rotate(-2deg) scale(1.05); }
+      80% { transform: translate(-1px, -1px) rotate(1deg) scale(1.2); }
+      90% { transform: translate(2px, 2px) rotate(0deg) scale(1.15); }
+      100% { transform: translate(1px, -2px) rotate(-1deg) scale(1.1); }
+    }
+
+    @keyframes scale-up {
+      0% { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); }
+      100% { box-shadow: 0 0 25px rgba(255, 51, 51, 0.9); }
+    }
+
+    @keyframes pulse-purple {
+      0% { box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
+      100% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.9); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="screen-container">
+    <div class="neon-flicker-bg"></div>
+
+    <!-- 1. 메인 메뉴 화면 -->
+    <div id="menu-screen">
+      <h1 class="title">THE BACKROOMS</h1>
+      <div class="subtitle">Escape from Dark Verity</div>
+
+      <div class="difficulty-container">
+        <div class="diff-label">난이도를 선택하세요</div>
+        <div class="diff-buttons">
+          <button class="diff-btn active" onclick="selectDifficulty('easy', this)">쉬움</button>
+          <button class="diff-btn" onclick="selectDifficulty('normal', this)">보통</button>
+          <button class="diff-btn" onclick="selectDifficulty('hard', this)">어려움</button>
+          <button class="diff-btn" onclick="selectDifficulty('hell', this)">HELL (보스)</button>
+          <button class="diff-btn" onclick="selectDifficulty('god', this)">신 (보스)</button>
+        </div>
+      </div>
+
+      <button class="start-btn" onclick="startGame()">START GAME</button>
+    </div>
+
+    <!-- 2. 게임 플레이 화면 -->
+    <div id="game-screen">
+      <div class="hud-bar">
+        <div class="hud-item">난이도: <span id="hud-diff-text">쉬움</span></div>
+        <div class="hud-item">지도 크기: <span id="hud-maze-size">13x13</span></div>
+        <div class="hud-item">상태: <span id="hud-status" style="color:#00ff66;">시작선 전 대기</span></div>
+      </div>
+
+      <!-- 보스전 HP 바 (HELL / GOD 난이도에서 노출) -->
+      <div class="health-container" id="boss-hud">
+        <div class="hp-bar-wrapper">
+          <div class="hp-bar-inner player" id="hp-player" style="width: 100%;"></div>
+          <div class="hp-label">스티브 체력: <span id="hp-txt-player">100</span>/100</div>
+        </div>
+        <div class="hp-bar-wrapper">
+          <div class="hp-bar-inner boss" id="hp-boss" style="width: 100%;"></div>
+          <div class="hp-label">보스 흑화 베리티: <span id="hp-txt-boss">1000</span>/1000</div>
+        </div>
+      </div>
+      
+      <canvas id="gameCanvas" width="800" height="800"></canvas>
+      
+      <div class="controls-indicator">
+        이동: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> | 조준/사격: <kbd>마우스 좌클릭</kbd> (F키) | 점프(레이저/장벽 회피): <kbd>Spacebar</kbd>
+      </div>
+    </div>
+
+    <!-- 3. 점프스케어 (공포 화면) -->
+    <div id="jumpscare-overlay">
+      <div class="blood-flash"></div>
+      <div class="jumpscare-face-container">
+        <canvas id="jumpscare-face-canvas" width="600" height="600"></canvas>
+      </div>
+      <div class="jumpscare-text">VERITY CAUGHT YOU</div>
+    </div>
+
+    <!-- 4. 게임 결과 오버레이 (성공 / 일반 실패) -->
+    <div id="result-screen" class="result-overlay">
+      <div id="result-header" class="result-title">탈출 성공!</div>
+      <div class="result-stats" id="result-info">
+        난이도: HELL<br>
+        소요 시간: 45초
+      </div>
+      <button class="action-btn" onclick="backToMenu()">메인 메뉴로</button>
+    </div>
+
+  </div>
+
+  <script>
+    // Web Audio API를 활용한 효과음 및 음산한 배경음 합성
+    let audioCtx = null;
+    let backgroundHum = null;
+
+    function initAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // 형광등 배경음 (Low drone hum)
+    function startAmbientHum() {
+      try {
+        initAudio();
+        if (backgroundHum) return;
+
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime); // 60Hz hum
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(100, audioCtx.currentTime);
+
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        
+        osc.start();
+        backgroundHum = { osc, gainNode };
+      } catch (e) {}
+    }
+
+    function stopAmbientHum() {
+      if (backgroundHum) {
+        try {
+          backgroundHum.osc.stop();
+        } catch(e){}
+        backgroundHum = null;
+      }
+    }
+
+    // 플레이어 발소리 생성
+    function playStepSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.16);
+    }
+
+    // 사격 효과음 (짧은 노이즈 기폭음)
+    function playGunShotSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.16);
+    }
+
+    // 보스 피격 효과음 (짧은 고주파 틱음)
+    function playHitClickSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.06);
+    }
+
+    // 보스 레이저 조준 경고음 (삐- 삐- 경고음)
+    function playLaserWarningSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.13);
+    }
+
+    // 보스 레이저 방출음 (지지직 저주파 노이즈 소음)
+    function playLaserFireSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(90, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(250, audioCtx.currentTime + 0.6);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.61);
+    }
+
+    // 시작선 돌파 알림 소리
+    function playAlertScream() {
+      initAudio();
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.45);
+    }
+
+    // 점프스케어 비명소리
+    function playScaryScream() {
+      initAudio();
+      if (!audioCtx) return;
+
+      const duration = 2.2;
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const noiseNode = createNoiseBufferNode();
+      
+      const gainNode = audioCtx.createGain();
+      const distortion = audioCtx.createWaveShaper();
+
+      distortion.curve = makeDistortionCurve(400);
+      distortion.oversample = '4x';
+
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(2000, audioCtx.currentTime);
+      osc1.frequency.linearRampToValueAtTime(180, audioCtx.currentTime + duration);
+
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(1600, audioCtx.currentTime);
+      osc2.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + duration);
+
+      gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+      osc1.connect(distortion);
+      osc2.connect(distortion);
+      if (noiseNode) noiseNode.connect(distortion);
+
+      distortion.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc1.start();
+      osc2.start();
+      if (noiseNode) noiseNode.start();
+
+      osc1.stop(audioCtx.currentTime + duration);
+      osc2.stop(audioCtx.currentTime + duration);
+      if (noiseNode) noiseNode.stop(audioCtx.currentTime + duration);
+    }
+
+    function createNoiseBufferNode() {
+      const bufferSize = audioCtx.sampleRate * 2.0;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      return noise;
+    }
+
+    function makeDistortionCurve(amount) {
+      const k = typeof amount === 'number' ? amount : 50;
+      const n_samples = 44100;
+      const curve = new Float32Array(n_samples);
+      const deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i) {
+        const x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+
+    // --- 게임 제어 엔진 ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const difficulties = {
+      easy: { mazeSize: 13, veritySpeed: 0.9, lightRadius: 150, flickerProb: 0.001, text: "쉬움", isBoss: false },
+      normal: { mazeSize: 21, veritySpeed: 1.4, lightRadius: 110, flickerProb: 0.003, text: "보통", isBoss: false },
+      hard: { mazeSize: 29, veritySpeed: 1.5, lightRadius: 85, flickerProb: 0.008, text: "어려움", isBoss: false }, // 어려움 속도 1.5로 너프 하향
+      hell: { mazeSize: 19, veritySpeed: 1.6, lightRadius: 100, flickerProb: 0.03, text: "HELL (보스전)", isBoss: true },
+      god: { mazeSize: 23, veritySpeed: 2.0, lightRadius: 45, flickerProb: 0.08, text: "신 (보스전)", isBoss: true }
+    };
+
+    let currentDifficultyKey = 'easy';
+    let gameActive = false;
+    let chaseStarted = false;
+    let maze = [];
+    let mazeCols = 13;
+    let mazeRows = 13;
+    let cellSize = 45;
+    let pathfinderTimer = 0;
+    let walkSoundTimer = 0;
+    let startTime = 0;
+    
+    const wasdKeys = { w: false, a: false, s: false, d: false };
+    const mouse = { x: 0, y: 0 };
+    
+    // 탄환 및 파티클 리스트
+    let bullets = [];
+    let bulletSparks = [];
+
+    // 스티브 플레이어 데이터
+    const steve = {
+      x: 0,
+      y: 0,
+      radius: 12,
+      speed: 2.3,
+      gridX: 1,
+      gridY: 1,
+      hp: 100,
+      
+      // 점프 변수
+      isJumping: false,
+      jumpVal: 0, // Math.sin(0~PI)
+      jumpHeight: 0 // Y 픽셀 공중 스케일링 값
+    };
+
+    // 보스 베리티 데이터
+    const verity = {
+      x: 0,
+      y: 0,
+      radius: 20, // 보스전은 더 웅장하게 크기 키움
+      speed: 1.4,
+      gridX: 0,
+      gridY: 1,
+      hp: 100,
+      path: [],
+      glitchX: 0,
+      glitchY: 0,
+      
+      // 보스 레이저 공격 시스템
+      laserState: 'idle', // 'idle', 'aiming' (warning), 'firing'
+      laserTimer: 0,
+      laserTargetX: 0,
+      laserTargetY: 0
+    };
+
+    let exitPortal = {
+      gridX: 1,
+      gridY: 1,
+      particles: [],
+      active: false // 보스전은 격퇴 시 소환
+    };
+
+    // 마우스 조준 리스너
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      // 캔버스 스케일링 보정
+      mouse.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      mouse.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    });
+
+    canvas.addEventListener('mousedown', e => {
+      if (e.button === 0) { // 좌클릭 사격
+        shootGun();
+      }
+    });
+
+    window.addEventListener('keydown', e => {
+      const key = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd'].includes(key)) {
+        wasdKeys[key] = true;
+      }
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        triggerSteveJump();
+      }
+      if (key === 'f') {
+        shootGun();
+      }
+    });
+
+    window.addEventListener('keyup', e => {
+      const key = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd'].includes(key)) {
+        wasdKeys[key] = false;
+      }
+    });
+
+    // 사격 실행
+    function shootGun() {
+      if (!gameActive) return;
+      playGunShotSound();
+
+      // 탄환 궤적 각도 연출
+      const angle = Math.atan2(mouse.y - steve.y, mouse.x - steve.x);
+      bullets.push({
+        x: steve.x,
+        y: steve.y - steve.jumpHeight, // 점프 높이 오프셋 반영
+        vx: Math.cos(angle) * 7.5,
+        vy: Math.sin(angle) * 7.5,
+        radius: 4
+      });
+    }
+
+    // 스티브 점프 시동 (스페이스바)
+    function triggerSteveJump() {
+      if (steve.isJumping) return;
+      steve.isJumping = true;
+      steve.jumpVal = 0;
+    }
+
+    // 난이도 선택
+    function selectDifficulty(diff, btnEl) {
+      currentDifficultyKey = diff;
+      document.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.classList.remove('active', 'hell-mode', 'god-mode');
+      });
+      btnEl.classList.add('active');
+      if (diff === 'hell') btnEl.classList.add('hell-mode');
+      if (diff === 'god') btnEl.classList.add('god-mode');
+    }
+
+    // --- 미로/아레나 맵 생성 ---
+    function generateMaze(cols, rows, isBoss) {
+      let grid = [];
+      for (let r = 0; r < rows; r++) {
+        grid[r] = [];
+        for (let c = 0; c < cols; c++) {
+          // 보스전 아레나 맵은 뻥 뚫려있는 오픈 코트 배치 (대신 군데군데 엄폐 기둥 배치)
+          if (isBoss) {
+            const isPillar = (r > 1 && r < rows - 2 && c > 1 && c < cols - 2 && r % 4 === 0 && c % 4 === 0);
+            grid[r][c] = (r === 0 || r === rows - 1 || c === 0 || c === cols - 1 || isPillar) ? 1 : 0;
+          } else {
+            grid[r][c] = 1;
+          }
+        }
+      }
+
+      if (!isBoss) {
+        let stack = [];
+        let startC = 1;
+        let startR = 1;
+        grid[startR][startC] = 0;
+        stack.push({ r: startR, c: startC });
+
+        while (stack.length > 0) {
+          let current = stack[stack.length - 1];
+          let neighbors = [];
+          const dirs = [{ r: -2, c: 0 }, { r: 2, c: 0 }, { r: 0, c: -2 }, { r: 0, c: 2 }];
+
+          for (let d of dirs) {
+            let nr = current.r + d.r;
+            let nc = current.c + d.c;
+            
+            if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1) {
+              if (grid[nr][nc] === 1) {
+                neighbors.push({ r: nr, c: nc, wallR: current.r + d.r / 2, wallC: current.c + d.c / 2 });
+              }
+            }
+          }
+
+          if (neighbors.length > 0) {
+            let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+            grid[next.r][next.c] = 0;
+            grid[next.wallR][next.wallC] = 0;
+            stack.push({ r: next.r, c: next.c });
+          } else {
+            stack.pop();
+          }
+        }
+      }
+
+      // 스티브 바로 뒤 (0, 1) 강제 오픈
+      grid[1][0] = 0;
+
+      return grid;
+    }
+
+    function initGame() {
+      const config = difficulties[currentDifficultyKey];
+      mazeCols = config.mazeSize;
+      mazeRows = config.mazeSize;
+      chaseStarted = false;
+      bullets = [];
+      bulletSparks = [];
+
+      // HP 리셋
+      steve.hp = 100;
+      verity.hp = 1000;
+      verity.laserState = 'idle';
+      verity.laserTimer = 0;
+      
+      cellSize = Math.floor(Math.min(800 / mazeCols, 800 / mazeRows));
+      canvas.width = mazeCols * cellSize;
+      canvas.height = mazeRows * cellSize;
+
+      maze = generateMaze(mazeCols, mazeRows, config.isBoss);
+
+      // 스티브 (1, 1)
+      steve.gridX = 1;
+      steve.gridY = 1;
+      const startCoords = getCellCoords(steve.gridX, steve.gridY);
+      steve.x = startCoords.x;
+      steve.y = startCoords.y;
+      steve.isJumping = false;
+      steve.jumpHeight = 0;
+
+      // 베리티 스폰 뒤쪽 (0, 1)
+      verity.gridX = 0;
+      verity.gridY = 1;
+      const enemyCoords = getCellCoords(verity.gridX, verity.gridY);
+      verity.x = enemyCoords.x;
+      verity.y = enemyCoords.y;
+      verity.speed = config.veritySpeed;
+      verity.radius = config.isBoss ? 20 : 13; // 보스전이면 체격 크게
+
+      // 탈출구 기본 세팅
+      exitPortal.gridX = mazeCols - 2;
+      exitPortal.gridY = mazeRows - 2;
+      exitPortal.particles = [];
+      // 보스 맵이면 클리어 후 포탈 활성화, 일반 맵이면 즉시 활성화
+      exitPortal.active = !config.isBoss;
+
+      // HP HUD 노출 여부
+      const bossHud = document.getElementById('boss-hud');
+      if (config.isBoss) {
+        bossHud.style.display = 'flex';
+        updateHPBars();
+      } else {
+        bossHud.style.display = 'none';
+      }
+
+      // HUD
+      document.getElementById('hud-diff-text').innerText = config.text;
+      if (currentDifficultyKey === 'god') {
+        document.getElementById('hud-diff-text').style.color = 'var(--god-purple)';
+      } else if (currentDifficultyKey === 'hell') {
+        document.getElementById('hud-diff-text').style.color = '#ff3333';
+      } else {
+        document.getElementById('hud-diff-text').style.color = 'var(--backrooms-yellow)';
+      }
+      document.getElementById('hud-maze-size').innerText = `${mazeCols}x${mazeRows}`;
+      document.getElementById('hud-status').innerText = "시작선 전 대기";
+      document.getElementById('hud-status').style.color = 'var(--backrooms-yellow)';
+      
+      startTime = Date.now();
+      gameActive = true;
+    }
+
+    function updateHPBars() {
+      // 스티브 체력바 업데이트
+      const playerBar = document.getElementById('hp-player');
+      playerBar.style.width = `${Math.max(0, steve.hp)}%`;
+      document.getElementById('hp-txt-player').innerText = Math.max(0, steve.hp);
+
+      // 보스 체력바 업데이트
+      const bossBar = document.getElementById('hp-boss');
+      bossBar.style.width = `${Math.max(0, (verity.hp / 1000) * 100)}%`;
+      document.getElementById('hp-txt-boss').innerText = Math.max(0, verity.hp);
+    }
+
+    // BFS 경로 찾기
+    function findPathBFS(startGridX, startGridY, targetGridX, targetGridY) {
+      let queue = [];
+      let visited = {};
+      let parent = {};
+
+      const startKey = `${startGridX},${startGridY}`;
+      queue.push({ x: startGridX, y: startGridY });
+      visited[startKey] = true;
+
+      const dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+      let found = false;
+
+      while (queue.length > 0) {
+        let current = queue.shift();
+        
+        if (current.x === targetGridX && current.y === targetGridY) {
+          found = true;
+          break;
+        }
+
+        for (let d of dirs) {
+          let nx = current.x + d.x;
+          let ny = current.y + d.y;
+          const nextKey = `${nx},${ny}`;
+
+          if (nx >= 0 && nx < mazeCols && ny >= 0 && ny < mazeRows) {
+            const wallThru = (currentDifficultyKey === 'hell' && Math.random() < 0.05);
+
+            if ((maze[ny][nx] === 0 || wallThru) && !visited[nextKey]) {
+              visited[nextKey] = true;
+              parent[nextKey] = current;
+              queue.push({ x: nx, y: ny });
+            }
+          }
+        }
+      }
+
+      if (!found) return [];
+
+      let path = [];
+      let current = { x: targetGridX, y: targetGridY };
+      while (current.x !== startGridX || current.y !== startGridY) {
+        path.push(current);
+        const currKey = `${current.x},${current.y}`;
+        current = parent[currKey];
+        if (!current) break;
+      }
+      return path.reverse();
+    }
+
+    function checkWallCollision(px, py, radius) {
+      // 점프 중일 때는 높이가 일정량 이상이면 벽 충돌을 완전히 무시
+      if (steve.isJumping && steve.jumpHeight > 10) {
+        return false;
+      }
+
+      const minCol = Math.floor((px - radius) / cellSize);
+      const maxCol = Math.floor((px + radius) / cellSize);
+      const minRow = Math.floor((py - radius) / cellSize);
+      const maxRow = Math.floor((py + radius) / cellSize);
+
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          if (r >= 0 && r < mazeRows && c >= 0 && c < mazeCols) {
+            if (maze[r][c] === 1) {
+              const wallLeft = c * cellSize;
+              const wallRight = (c + 1) * cellSize;
+              const wallTop = r * cellSize;
+              const wallBottom = (r + 1) * cellSize;
+
+              const closestX = Math.max(wallLeft, Math.min(px, wallRight));
+              const closestY = Math.max(wallTop, Math.min(py, wallBottom));
+
+              const distC = Math.hypot(px - closestX, py - closestY);
+              if (distC < radius) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function getCellCoords(gridX, gridY) {
+      return {
+        x: gridX * cellSize + cellSize / 2,
+        y: gridY * cellSize + cellSize / 2
+      };
+    }
+
+    // --- 핵심 비즈니스 로직 프레임 루프 ---
+    function updateGame() {
+      if (!gameActive) return;
+
+      // 1. 스티브 점프 포물선 물리 계산
+      if (steve.isJumping) {
+        steve.jumpVal += 0.08; // 포물선 진행속도
+        steve.jumpHeight = Math.sin(steve.jumpVal) * 22; // 점프 픽셀 높이
+        if (steve.jumpVal >= Math.PI) {
+          steve.isJumping = false;
+          steve.jumpHeight = 0;
+          steve.jumpVal = 0;
+        }
+      }
+
+      // 2. 스티브 이동 물리
+      let moved = false;
+      let dx = 0;
+      let dy = 0;
+
+      if (wasdKeys['w']) { dy = -steve.speed; moved = true; }
+      if (wasdKeys['s']) { dy = steve.speed; moved = true; }
+      if (wasdKeys['a']) { dx = -steve.speed; moved = true; }
+      if (wasdKeys['d']) { dx = steve.speed; moved = true; }
+
+      if (moved) {
+        steve.x += dx;
+        if (checkWallCollision(steve.x, steve.y, steve.radius)) {
+          steve.x -= dx;
+        }
+
+        steve.y += dy;
+        if (checkWallCollision(steve.x, steve.y, steve.radius)) {
+          steve.y -= dy;
+        }
+
+        steve.gridX = Math.floor(steve.x / cellSize);
+        steve.gridY = Math.floor(steve.y / cellSize);
+
+        // 시작선 돌파 체크 (X가 2셀 너비를 넘어가면 추격 트리거)
+        if (!chaseStarted && steve.x > 2 * cellSize) {
+          chaseStarted = true;
+          playAlertScream();
+          startAmbientHum();
+        }
+
+        walkSoundTimer++;
+        if (walkSoundTimer % 20 === 0 && !steve.isJumping) {
+          playStepSound();
+        }
+      }
+
+      // 3. 탄환 물리 업데이트
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+
+        // 벽 충돌 검사
+        if (checkWallCollision(b.x, b.y, b.radius)) {
+          // 불꽃 생성
+          for(let k=0; k<6; k++) {
+            bulletSparks.push({
+              x: b.x, y: b.y,
+              vx: (Math.random() * 3 - 1.5),
+              vy: (Math.random() * 3 - 1.5),
+              color: '#d1b87a',
+              life: 15
+            });
+          }
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        // 보스전(HELL/GOD) 상태일 때 보스 타격 충돌 검사
+        const config = difficulties[currentDifficultyKey];
+        if (config.isBoss && verity.hp > 0) {
+          const distToBoss = Math.hypot(b.x - verity.x, b.y - verity.y);
+          if (distToBoss < (b.radius + verity.radius)) {
+            // 보스 피해
+            verity.hp -= 5;
+            playHitClickSound();
+            
+            // 보스 피격 이펙트 파티클
+            for(let k=0; k<10; k++) {
+              bulletSparks.push({
+                x: b.x, y: b.y,
+                vx: (Math.random() * 5 - 2.5),
+                vy: (Math.random() * 5 - 2.5),
+                color: '#ff0055',
+                life: 20
+              });
+            }
+
+            // 보스 사멸 체크
+            if (verity.hp <= 0) {
+              verity.hp = 0;
+              triggerBossDefeated();
+            }
+
+            updateHPBars();
+            bullets.splice(i, 1);
+            continue;
+          }
+        }
+
+        // 화면 이탈 검사
+        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+          bullets.splice(i, 1);
+        }
+      }
+
+      // 탄환 스파크 파티클 갱신
+      for (let i = bulletSparks.length - 1; i >= 0; i--) {
+        const s = bulletSparks[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life--;
+        if (s.life <= 0) bulletSparks.splice(i, 1);
+      }
+
+      // 4. 베리티 AI 추격 루프
+      if (chaseStarted && verity.hp > 0) {
+        const config = difficulties[currentDifficultyKey];
+
+        // --- 보스 레이저 스킬 스케줄러 (HELL / GOD) ---
+        if (config.isBoss) {
+          verity.laserTimer++;
+          // 보스 스킬 주기 (HELL은 4초, GOD은 2.5초)
+          const skillInterval = currentDifficultyKey === 'god' ? 150 : 240;
+
+          if (verity.laserState === 'idle' && verity.laserTimer >= skillInterval) {
+            // 레이저 타게팅 차징 온 (1단계)
+            verity.laserState = 'aiming';
+            verity.laserTimer = 0;
+            verity.laserTargetX = steve.x;
+            verity.laserTargetY = steve.y;
+            playLaserWarningSound();
+          } else if (verity.laserState === 'aiming' && verity.laserTimer >= 50) { // 0.8초 경고 대기
+            // 레이저 방출 발사! (2단계)
+            verity.laserState = 'firing';
+            verity.laserTimer = 0;
+            playLaserFireSound();
+          } else if (verity.laserState === 'firing' && verity.laserTimer >= 40) { // 0.6초 레이저 발사
+            // 원 상태 회귀
+            verity.laserState = 'idle';
+            verity.laserTimer = 0;
+          }
+        }
+
+        // 보스가 레이저 조준/발사 중일 때는 이동을 정지함
+        if (verity.laserState === 'idle') {
+          if (currentDifficultyKey === 'god') {
+            // --- 신(GOD) 모드: 벽 관통 월핵 직진 돌격 ---
+            const angle = Math.atan2(steve.y - verity.y, steve.x - verity.x);
+            verity.x += Math.cos(angle) * verity.speed;
+            verity.y += Math.sin(angle) * verity.speed;
+            
+            verity.gridX = Math.floor(verity.x / cellSize);
+            verity.gridY = Math.floor(verity.y / cellSize);
+          } else {
+            // --- 일반 모드: BFS 최단 경로 추적 ---
+            pathfinderTimer++;
+            const pathfindIntervals = { easy: 35, normal: 20, hard: 14, hell: 1 };
+            const interval = pathfindIntervals[currentDifficultyKey];
+
+            if (pathfinderTimer >= interval) {
+              pathfinderTimer = 0;
+              verity.path = findPathBFS(verity.gridX, verity.gridY, steve.gridX, steve.gridY);
+            }
+
+            if (verity.path.length > 0) {
+              const nextCell = verity.path[0];
+              const targetCoords = getCellCoords(nextCell.x, nextCell.y);
+
+              const angle = Math.atan2(targetCoords.y - verity.y, targetCoords.x - verity.x);
+              verity.x += Math.cos(angle) * verity.speed;
+              verity.y += Math.sin(angle) * verity.speed;
+
+              const distToCell = Math.hypot(targetCoords.x - verity.x, targetCoords.y - verity.y);
+              if (distToCell < 4) {
+                verity.x = targetCoords.x;
+                verity.y = targetCoords.y;
+                verity.gridX = nextCell.x;
+                verity.gridY = nextCell.y;
+                verity.path.shift();
+              }
+            }
+          }
+        }
+
+        // --- 레이저 피격 검사 루틴 ---
+        if (verity.laserState === 'firing' && !steve.isJumping) {
+          // 보스와 타겟 좌표를 잇는 선분 대 스티브 구체 중심과의 수직 거리 산정
+          // 점프 중일 때는 공중으로 뛰어넘어 무적 판정 회피!
+          const laserDist = pointToLineDistance(steve.x, steve.y, verity.x, verity.y, verity.laserTargetX, verity.laserTargetY);
+          if (laserDist < steve.radius + 8) { // 레이저 선 폭 16px 고려
+            steve.hp -= 2.5; // 급속 체력 소모
+            updateHPBars();
+            
+            // 데미지 스파크 파티클
+            bulletSparks.push({
+              x: steve.x + (Math.random()*12-6),
+              y: steve.y + (Math.random()*12-6),
+              vx: Math.random()*2-1,
+              vy: Math.random()*2-1,
+              color: '#ff0033',
+              life: 10
+            });
+
+            if (steve.hp <= 0) {
+              steve.hp = 0;
+              triggerJumpscare();
+              return;
+            }
+          }
+        }
+
+        // --- 접촉 데미지 / 닿음 충돌 검사 ---
+        const distToSteve = Math.hypot(steve.x - verity.x, steve.y - verity.y);
+        if (distToSteve < (steve.radius + verity.radius)) {
+          // 점프 중(isJumping & 일정 높이 이상)일 때는 머리 위로 넘어 뛰어 넘으므로 접촉 데미지 면제
+          if (!(steve.isJumping && steve.jumpHeight > 6)) {
+            if (config.isBoss) {
+              // 보스전은 점진적 틱 데미지 감쇄
+              steve.hp -= 1.2;
+              updateHPBars();
+              
+              if (steve.hp <= 0) {
+                steve.hp = 0;
+                triggerJumpscare();
+                return;
+              }
+            } else {
+              // 일반 탈출 모드에서는 닿는 즉시 사망(HP 0으로 떨어지며 점프스케어 트리거)
+              steve.hp = 0;
+              triggerJumpscare();
+              return;
+            }
+          }
+        }
+      }
+
+      // 5. 탈출 포탈 충돌 통과 판정
+      if (exitPortal.active) {
+        const coords = getCellCoords(exitPortal.gridX, exitPortal.gridY);
+        const distToExit = Math.hypot(steve.x - coords.x, steve.y - coords.y);
+        if (distToExit < 16) {
+          triggerVictory();
+          return;
+        }
+      }
+    }
+
+    // 선분(P1-P2)과 점(P0) 사이의 거리 공식 알고리즘
+    function pointToLineDistance(x0, y0, x1, y1, x2, y2) {
+      const A = x0 - x1;
+      const B = y0 - y1;
+      const C = x2 - x1;
+      const D = y2 - y1;
+
+      const dot = A * C + B * D;
+      const lenSq = C * C + D * D;
+      let param = -1;
+      if (lenSq !== 0) param = dot / lenSq;
+
+      let xx, yy;
+      if (param < 0) {
+        xx = x1;
+        yy = y1;
+      } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+      } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+      }
+
+      const dx = x0 - xx;
+      const dy = y0 - yy;
+      return Math.hypot(dx, dy);
+    }
+
+    // 보스 격파 시 호출
+    function triggerBossDefeated() {
+      // 검은 연기 폭발 파티클
+      for (let i = 0; i < 50; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        exitPortal.particles.push({
+          x: verity.x,
+          y: verity.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: Math.random() * 8 + 4,
+          color: '#1a1a1a',
+          life: 40,
+          maxLife: 40
+        });
+      }
+
+      // 지옥의 탈출구 포탈 아레나 중앙에 소환!
+      exitPortal.gridX = Math.floor(mazeCols / 2);
+      exitPortal.gridY = Math.floor(mazeRows / 2);
+      maze[exitPortal.gridY][exitPortal.gridX] = 0; // 혹시 기둥이 뚫려있어도 안심
+      exitPortal.active = true;
+
+      document.getElementById('hud-status').innerText = "보스 처치! 지옥의 문 출현";
+      document.getElementById('hud-status').style.color = 'var(--neon-gold)';
+    }
+
+    // --- 드로잉 함수 ---
+
+    // 백룸 맵
+    function drawMaze(ctx) {
+      for (let r = 0; r < mazeRows; r++) {
+        for (let c = 0; c < mazeCols; c++) {
+          const x = c * cellSize;
+          const y = r * cellSize;
+
+          if (maze[r][c] === 1) {
+            ctx.fillStyle = '#bfa565';
+            ctx.fillRect(x, y, cellSize, cellSize);
+
+            ctx.strokeStyle = '#473d22';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, cellSize, cellSize);
+            
+            ctx.fillStyle = 'rgba(74, 61, 35, 0.25)';
+            ctx.fillRect(x + cellSize/4, y + cellSize/5, cellSize/2, cellSize/2);
+          } else {
+            ctx.fillStyle = '#d3caaf';
+            ctx.fillRect(x, y, cellSize, cellSize);
+
+            ctx.fillStyle = 'rgba(110, 99, 74, 0.15)';
+            ctx.fillRect(x + 5, y + 5, 2, 2);
+            ctx.fillRect(x + cellSize - 8, y + 12, 2, 2);
+            ctx.fillRect(x + 15, y + cellSize - 10, 2, 2);
+          }
+        }
+      }
+
+      // 시작선
+      ctx.save();
+      const lineX = 2 * cellSize;
+      ctx.strokeStyle = '#ff0033';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#ff0033';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(lineX, cellSize);
+      ctx.lineTo(lineX, 2 * cellSize);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 픽셀 스티브 드로잉
+    function drawSteve(ctx) {
+      ctx.save();
+      // 점프 중일 때 높이(Y축 수직 offset) 만큼 스티브 몸체를 들어 올림
+      ctx.translate(steve.x, steve.y - steve.jumpHeight);
+
+      // 점프 시 높이가 생길 때 아래 잔존하는 스티브의 검은 발바닥 그림자
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      // 점프 중이면 높이가 높을수록 그림자가 작아지도록 연출
+      const shadowRad = Math.max(3, 8 - (steve.jumpHeight * 0.15));
+      ctx.arc(0, steve.radius - 2 + steve.jumpHeight, shadowRad, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 스티브 픽셀 드로잉 (공중 도약 시 크기감(scale)도 미세 증가)
+      const scaleMultiplier = 1 + (steve.jumpHeight * 0.005);
+      ctx.scale(scaleMultiplier, scaleMultiplier);
+
+      const px = steve.radius / 7;
+
+      ctx.fillStyle = '#008b8b';
+      ctx.fillRect(-px*5, -px, px*10, px*6);
+
+      ctx.fillStyle = '#bf937a';
+      ctx.fillRect(-px*7, -px, px*2, px*5);
+      ctx.fillRect(px*5, -px, px*2, px*5);
+
+      ctx.fillStyle = '#3a2575';
+      ctx.fillRect(-px*4, px*5, px*3, px*3);
+      ctx.fillRect(px, px*5, px*3, px*3);
+
+      ctx.fillStyle = '#dbb398';
+      ctx.fillRect(-px*3.5, -px*7, px*7, px*7);
+
+      ctx.fillStyle = '#4c3018';
+      ctx.fillRect(-px*3.5, -px*7, px*7, px*2.5);
+      ctx.fillRect(-px*3.5, -px*4.5, px*1.5, px*1.5);
+      ctx.fillRect(px*2, -px*4.5, px*1.5, px*1.5);
+
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-px*2.5, -px*3.5, px*1.2, px*0.8);
+      ctx.fillRect(px*1.3, -px*3.5, px*1.2, px*0.8);
+      ctx.fillStyle = '#466aa5';
+      ctx.fillRect(-px*2.0, -px*3.5, px*0.7, px*0.8);
+      ctx.fillRect(px*1.3, -px*3.5, px*0.7, px*0.8);
+
+      ctx.fillStyle = '#4c3018';
+      ctx.fillRect(-px*1.5, -px*1.8, px*3, px*0.8);
+
+      // 들고 있는 네온 권총 드로잉
+      ctx.save();
+      const gunAngle = Math.atan2(mouse.y - steve.y, mouse.x - steve.x);
+      ctx.rotate(gunAngle);
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = 'var(--primary-cyan)';
+      ctx.lineWidth = 1.2;
+      ctx.fillRect(5, -2, 8, 4); // 총열
+      ctx.fillRect(5, 0, 3, 5);  // 손잡이
+      ctx.strokeRect(5, -2, 8, 4);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    // 흑화 베리티 보스 렌더러
+    function drawVerity(ctx) {
+      if (verity.hp <= 0) return; // 보스 사망 시 렌더링 생략
+
+      ctx.save();
+      ctx.translate(verity.x + verity.glitchX, verity.y + verity.glitchY);
+
+      if (Math.random() < 0.15) {
+        verity.glitchX = Math.random() * 8 - 4;
+        verity.glitchY = Math.random() * 8 - 4;
+      } else {
+        verity.glitchX = 0;
+        verity.glitchY = 0;
+      }
+
+      // 조준 레이저 경고 빔 가이드 (Aiming phase)
+      if (verity.laserState === 'aiming') {
+        ctx.restore();
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 0, 51, 0.4)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 8]);
+        
+        ctx.beginPath();
+        ctx.moveTo(verity.x, verity.y);
+        ctx.lineTo(verity.laserTargetX, verity.laserTargetY);
+        ctx.stroke();
+        ctx.restore();
+        ctx.save();
+        ctx.translate(verity.x + verity.glitchX, verity.y + verity.glitchY);
+      }
+
+      // 보스 레이저 폭풍 발사 (Firing phase)
+      if (verity.laserState === 'firing') {
+        ctx.restore();
+        ctx.save();
+        
+        // 레이저 중심 가시광선 드로잉
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(verity.x, verity.y);
+        ctx.lineTo(verity.laserTargetX, verity.laserTargetY);
+        ctx.stroke();
+
+        // 외부 네온 광폭 에너지 구역 표현
+        ctx.strokeStyle = 'rgba(255, 0, 127, 0.65)';
+        ctx.lineWidth = 14;
+        ctx.shadowColor = '#ff007f';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.moveTo(verity.x, verity.y);
+        ctx.lineTo(verity.laserTargetX, verity.laserTargetY);
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.save();
+        ctx.translate(verity.x + verity.glitchX, verity.y + verity.glitchY);
+      }
+
+      // 본체 그림자 외관
+      ctx.fillStyle = '#0a0a0d';
+      ctx.shadowColor = verity.laserState !== 'idle' ? '#ff3300' : '#ff0033';
+      ctx.shadowBlur = verity.laserState !== 'idle' ? 22 : 12;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, verity.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(-7, -4, 4, 0, Math.PI * 2);
+      ctx.arc(7, -4, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 입 미소
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 4, 6, 0, Math.PI);
+      ctx.stroke();
+
+      // 꿈틀거리는 촉수
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3.5;
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI / 4) * i + (Date.now() * 0.008);
+        const len = verity.radius + 8 + Math.sin(Date.now() * 0.04) * 6;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    // 탈출 지옥의 포탈 문
+    function drawHellGate(ctx) {
+      if (!exitPortal.active) return; // 미활성화 시 스킵
+
+      const coords = getCellCoords(exitPortal.gridX, exitPortal.gridY);
+      
+      if (Math.random() < 0.6) {
+        exitPortal.particles.push({
+          x: coords.x + (Math.random() * 30 - 15),
+          y: coords.y + (Math.random() * 30 - 10),
+          size: Math.random() * 5 + 2,
+          color: Math.random() < 0.4 ? '#ff5500' : (Math.random() < 0.5 ? '#ffcc00' : '#ff0000'),
+          life: 40,
+          maxLife: 40
+        });
+      }
+
+      // 입자 이동 및 수명 처리
+      for (let i = exitPortal.particles.length - 1; i >= 0; i--) {
+        const p = exitPortal.particles[i];
+        p.x += p.vx || 0;
+        p.y += (p.vy || -0.8);
+        p.life--;
+        
+        ctx.save();
+        ctx.globalAlpha = p.life / p.maxLife;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        if (p.life <= 0) {
+          exitPortal.particles.splice(i, 1);
+        }
+      }
+
+      ctx.save();
+      ctx.translate(coords.x, coords.y);
+
+      ctx.fillStyle = '#240808';
+      ctx.fillRect(-18, -20, 6, 40);
+      ctx.fillRect(12, -20, 6, 40);
+      ctx.fillRect(-18, -24, 36, 6);
+
+      const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, 16);
+      grad.addColorStop(0, '#ff0000');
+      grad.addColorStop(0.3, '#730b0b');
+      grad.addColorStop(1, '#000000');
+      ctx.fillStyle = grad;
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 14, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ff3300';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#ff3300';
+      ctx.shadowBlur = 10;
+      ctx.strokeRect(-18, -24, 36, 44);
+
+      ctx.restore();
+    }
+
+    // 손전등 라이팅
+    function drawFlashlightMask(ctx) {
+      ctx.save();
+      
+      const config = difficulties[currentDifficultyKey];
+      let radius = config.lightRadius;
+
+      const now = Date.now();
+      if (Math.random() < config.flickerProb) {
+        radius = radius * (Math.random() * 0.15); 
+        document.getElementById('hud-status').innerText = "조명 불안정!";
+        document.getElementById('hud-status').style.color = '#ff3300';
+      } else {
+        if (!chaseStarted) {
+          document.getElementById('hud-status').innerText = "시작선 전 대기";
+          document.getElementById('hud-status').style.color = 'var(--backrooms-yellow)';
+        } else {
+          if (config.isBoss && verity.hp <= 0) {
+            document.getElementById('hud-status').innerText = "보스 격퇴! 탈출구 활성";
+            document.getElementById('hud-status').style.color = 'var(--neon-gold)';
+          } else {
+            const dist = Math.hypot(steve.x - verity.x, steve.y - verity.y);
+            if (dist < 180 && verity.hp > 0) {
+              document.getElementById('hud-status').innerText = "위험!!! 보스 인근 조준";
+              document.getElementById('hud-status').style.color = '#ff0000';
+              radius += Math.sin(now * 0.025) * 4;
+            } else {
+              document.getElementById('hud-status').innerText = "추격 및 전투 중";
+              document.getElementById('hud-status').style.color = '#ff9900';
+            }
+          }
+        }
+      }
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.98)';
+      
+      ctx.beginPath();
+      ctx.rect(0, 0, canvas.width, canvas.height);
+      ctx.arc(steve.x, steve.y, radius, 0, Math.PI * 2, true);
+      ctx.fill();
+
+      const flashlightGrad = ctx.createRadialGradient(steve.x, steve.y, radius * 0.4, steve.x, steve.y, radius);
+      flashlightGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      flashlightGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0.3)');
+      flashlightGrad.addColorStop(1, 'rgba(0, 0, 0, 0.98)');
+      
+      ctx.fillStyle = flashlightGrad;
+      ctx.beginPath();
+      ctx.arc(steve.x, steve.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // 탄환 렌더링
+    function drawBullets(ctx) {
+      ctx.save();
+      ctx.fillStyle = 'var(--neon-yellow)';
+      ctx.shadowColor = 'var(--neon-yellow)';
+      ctx.shadowBlur = 8;
+      for (let b of bullets) {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 스파크들
+      ctx.shadowBlur = 0;
+      for (let s of bulletSparks) {
+        ctx.fillStyle = s.color;
+        ctx.fillRect(s.x, s.y, 2.5, 2.5);
+      }
+      ctx.restore();
+    }
+
+    // 프레임 렌더러
+    function renderGame() {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawMaze(ctx);
+      drawHellGate(ctx);
+      drawBullets(ctx);
+      drawSteve(ctx);
+      drawVerity(ctx);
+      drawFlashlightMask(ctx);
+    }
+
+    // 메인 루프
+    function gameLoop() {
+      updateGame();
+      renderGame();
+      if (gameActive) {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // 게임 오버
+    function triggerJumpscare() {
+      gameActive = false;
+      stopAmbientHum();
+      playScaryScream();
+
+      document.getElementById('jumpscare-overlay').style.display = 'flex';
+
+      setTimeout(() => {
+        document.getElementById('jumpscare-overlay').style.display = 'none';
+        showResultScreen(false);
+      }, 3500);
+    }
+
+    // 탈출 성공
+    function triggerVictory() {
+      gameActive = false;
+      stopAmbientHum();
+      showResultScreen(true);
+    }
+
+    function startGame() {
+      initAudio();
+      document.getElementById('menu-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
+      
+      initGame();
+      gameLoop();
+    }
+
+    function showResultScreen(isWin) {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const resultScreen = document.getElementById('result-screen');
+      const header = document.getElementById('result-header');
+      const info = document.getElementById('result-info');
+
+      if (isWin) {
+        header.innerText = "지옥의 문 탈출 성공!";
+        header.className = "result-title win";
+        info.innerHTML = `
+          백룸에서 무사히 살아남아 탈출했습니다.<br><br>
+          선택 난이도: <strong>${difficulties[currentDifficultyKey].text}</strong><br>
+          생존 소요 시간: <strong>${elapsed}초</strong>
+        `;
+      } else {
+        header.innerText = "심연 속에 잠식됨...";
+        header.className = "result-title lose";
+        info.innerHTML = `
+          체력이 소진되어 어둠의 베리티에게 사로잡혔습니다.<br><br>
+          선택 난이도: <strong>${difficulties[currentDifficultyKey].text}</strong><br>
+          생존 시간: <strong>${elapsed}초</strong>
+        `;
+      }
+
+      resultScreen.style.display = 'flex';
+    }
+
+    function backToMenu() {
+      document.getElementById('result-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('menu-screen').style.display = 'flex';
+      
+      for(let key in wasdKeys) wasdKeys[key] = false;
+    }
+  </script>
+</body>
+</html>

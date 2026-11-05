@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twinkling Yellow Stars</title>
+    <style>
+        /* 기본 배경 설정 - 어두운 밤 하늘 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #020004; /* 매우 어두운 검정색 */
+            background-image: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* 스크롤 막기 */
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            color: #d4af37; /* 금색 계열 */
+            font-family: 'Arial', 'Gothic', sans-serif;
+            z-index: 10;
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+        }
+
+        h1 span {
+            display: block;
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        /* 별 스타일 설정 */
+        .star {
+            position: absolute;
+            background-color: #fdfbd5; /* 밝은 노란색 */
+            border-radius: 50%; /* 원형 */
+            opacity: 0.8;
+            z-index: 1;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 별의 테두기 (작은 광택 효과) */
+        .star::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -30%;
+            width: 160%;
+            height: 160%;
+            border-radius: 50%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.8), transparent);
+            z-index: -1;
+        }
+
+        /* 반짝임 애니메이션 */
+        @keyframes twinkle {
+            0% {
+                opacity: 0.3; /* 어두움 */
+                transform: scale(0.8);
+                box-shadow: 0 0 2px rgba(255, 215, 0, 0.2);
+            }
+            50% {
+                opacity: 1; /* 가장 밝음 */
+                transform: scale(1.1);
+                box-shadow: 0 0 8px #ffd700, 0 0 14px #ffea00; /* 금색 그라데이션 광택 */
+            }
+            100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+                box-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        /* 별마다 반짝임 속도를 다르게 주기 위한 클래스 */
+        .twinkle-anim {
+            animation-name: twinkle;
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>
+        <span>Good Night</span>
+        <span style="font-size: 5rem; letter-spacing: 10px;">Sweet Dreams</span>
+    </h1>
+
+    <script>
+        // 별 생성 함수
+        function createStar() {
+            const star = document.createElement('div');
+            
+            // 1. 랜덤한 크기 (1px ~ 4px)
+            const size = Math.random() * 3 + 1;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+
+            // 2. 랜덤한 위치 (화면 전체)
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 80}%`; // 상단 80%만 사용하여 하단 여백 확보
+
+            // 3. 반짝임 속도 (1초 ~ 4초 사이 랜덤)
+            const duration = Math.random() * 3 + 1; 
+            star.style.animationDuration = `${duration}s`;
+
+            // 4. 반짝임 효과 적용
+            star.classList.add('star', 'twinkle-anim');
+
+            document.body.appendChild(star);
+        }
+
+        // 주기적으로 별 생성 (0.2초마다 하나씩 추가)
+        setInterval(createStar, 200);
+
+        // 초기에 많은 별 생성
+        for(let i = 0; i < 50; i++) {
+            createStar();
+        }
+    </script>
+</body>
+</html>

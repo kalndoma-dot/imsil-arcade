@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>임실 청소년 문화의집 디지털 창작 아케이드 & 갤러리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=Jua&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: rgba(23, 32, 54, 0.7);
+      --bg-card-hover: rgba(30, 41, 69, 0.95);
+      --primary: #4f46e5;
+      --primary-glow: rgba(79, 70, 229, 0.4);
+      --accent-cyan: #06b6d4;
+      --accent-pink: #ec4899;
+      --accent-yellow: #f59e0b;
+      --accent-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 60%, rgba(236, 72, 153, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(6, 182, 212, 0.12) 0%, transparent 45%);
+      background-attachment: fixed;
+    }
+
+    /* 상단 네비게이션 / 헤더 */
+    header {
+      padding: 40px 24px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(79, 70, 229, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+    }
+
+    h1.hero-title {
+      font-family: 'Jua', 'Pretendard', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 70%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    p.hero-desc {
+      color: var(--text-muted);
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      max-width: 680px;
+      margin: 0 auto 30px;
+      line-height: 1.6;
+    }
+
+    /* 통계 칩 바 */
+    .stat-bar {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .stat-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .stat-item strong {
+      color: var(--accent-cyan);
+      font-size: 1.05rem;
+    }
+
+    /* 필터 버튼 영역 */
+    .filter-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+      padding: 0 16px;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      padding: 10px 20px;
+      border-radius: 9999px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .filter-btn.active {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    }
+
+    /* 메인 컨테이너 및 그리드 */
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 24px;
+    }
+
+    /* 작품 카드 스타일 */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      background: var(--bg-card-hover);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+
+    .card-banner {
+      height: 140px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.2rem;
+      overflow: hidden;
+    }
+
+    .card-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(23, 32, 54, 0.9) 100%);
+    }
+
+    .badge-category {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .card-body {
+      padding: 20px 22px 22px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .author-tag {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title {
+      font-family: 'Jua', 'Pretendard', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+      flex-grow: 1;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn-play {
+      flex: 1;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-play:hover {
+      background: linear-gradient(135deg, #4338ca, #4f46e5);
+      transform: scale(1.02);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
+    }
+
+    .btn-external {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-external:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* 방명록 및 센터 가이드 섹션 */
+    .section-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 50px;
+      backdrop-filter: blur(12px);
+    }
+
+    .section-title {
+      font-family: 'Jua', 'Pretendard', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .guestbook-input-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .input-author, .input-message {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .input-author { width: 140px; }
+    .input-message { flex: 1; min-width: 200px; }
+    .input-author:focus, .input-message:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-submit-cheer {
+      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-submit-cheer:hover { opacity: 0.9; }
+
+    .cheer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .cheer-item {
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--accent-cyan);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cheer-item span.user {
+      font-weight: 700;
+      color: #38bdf8;
+      margin-right: 8px;
+    }
+
+    .cheer-item span.time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* 센터 키오스크 팁 */
+    .kiosk-tip-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .kiosk-tip-card {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .kiosk-tip-card h4 {
+      color: var(--accent-yellow);
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+    .kiosk-tip-card p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    /* 모달 플레이어 (전체화면 인라인 런처) */
+    .player-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.92);
+      flex-direction: column;
+      backdrop-filter: blur(10px);
+    }
+
+    .player-modal.active {
+      display: flex;
+    }
+
+    .modal-header {
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-game-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-game-info h2 {
+      font-family: 'Jua', 'Pretendard', sans-serif;
+      font-size: 1.3rem;
+      color: #ffffff;
+    }
+
+    .modal-game-info .author-badge {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(79, 70, 229, 0.3);
+      color: #c7d2fe;
+    }
+
+    .modal-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-modal-action {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-modal-action:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-modal-close {
+      background: #dc2626;
+      border-color: #ef4444;
+    }
+    .btn-modal-close:hover {
+      background: #b91c1c;
+    }
+
+    .modal-iframe-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #000;
+    }
+
+    .modal-iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* QR코드 모달 */
+    .btn-qr-view {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-qr-view:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .qr-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.85);
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      padding: 20px;
+    }
+    .qr-modal.active { display: flex; }
+
+    .qr-modal-card {
+      background: #0f172a;
+      border: 2px solid #38bdf8;
+      border-radius: 24px;
+      padding: 30px 24px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(56, 189, 248, 0.25);
+    }
+    .qr-modal-card h2 {
+      font-family: 'Jua', 'Pretendard', sans-serif;
+      font-size: 1.6rem;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    .qr-modal-card p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .qr-img-wrap {
+      background: white;
+      padding: 14px;
+      border-radius: 16px;
+      display: inline-block;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .qr-img-wrap img {
+      display: block;
+      width: 200px;
+      height: 200px;
+    }
+    .qr-url-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .qr-url-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .qr-url-input:focus { border-color: #38bdf8; }
+    .btn-qr-update {
+      background: #38bdf8;
+      border: none;
+      color: #0f172a;
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .qr-btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    /* 반응형 조절 */
+    @media (max-width: 640px) {
+      .modal-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .modal-controls {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 헤더 영역 -->
+  <header>
+    <div class="badge-pill">✨ 임실 청소년 문화의집 · 디지털 크리에이티브 쇼케이스</div>
+    <h1 class="hero-title">임실 청소년 문화의집 창작 아케이드</h1>
+    <p class="hero-desc">
+      임실 청소년 문화의집 학생들의 상상력과 코딩으로 완성된 인터랙티브 게임과 아트 전시관입니다.<br>
+      원하는 작품을 선택하여 바로 플레이하고 창작자 친구들을 응원해 보세요!
+    </p>
+
+    <!-- 통계 바 -->
+    <div class="stat-bar">
+      <div class="stat-item">총 전시작 <strong>11개</strong></div>
+      <div class="stat-item">청소년 창작자 <strong>8명 +</strong></div>
+      <div class="stat-item">체험 장르 <strong>게임 · 퍼즐 · 인터랙티브 아트</strong></div>
+    </div>
+
+    <!-- 스마트폰 QR코드 버튼 -->
+    <div style="margin-bottom: 24px;">
+      <button class="btn-qr-view" id="btnOpenQrModal">📱 스마트폰 접속 QR코드</button>
+    </div>
+
+    <!-- 필터 바 -->
+    <div class="filter-wrapper">
+      <button class="filter-btn active" data-filter="all">전체보기 (11)</button>
+      <button class="filter-btn" data-filter="game">🎮 아케이드 / 액션 (4)</button>
+      <button class="filter-btn" data-filter="puzzle">🧠 두뇌 / 퍼즐 (2)</button>
+      <button class="filter-btn" data-filter="art">🎨 인터랙티브 아트 (4)</button>
+      <button class="filter-btn" data-filter="boss">⚔️ 스페셜 챌린지 (1)</button>
+    </div>
+  </header>
+
+  <!-- 메인 작품 목록 그리드 -->
+  <main>
+    <div class="grid-container" id="projectGrid">
+      <!-- 자바스크립트로 11개 작품 렌더링 -->
+    </div>
+
+    <!-- 임실 청소년 문화의집 운영 & 키오스크 팁 -->
+    <div class="section-box">
+      <h3 class="section-title">🏛️ 임실 청소년 문화의집 전시 & 활용 안내</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
+        이 허브 웹페이지는 임실 청소년 문화의집 내의 <strong>체험존 PC, 터치스크린 키오스크, 태블릿</strong>에서 바로 전시할 수 있도록 설계되었습니다.
+      </p>
+
+      <div class="kiosk-tip-grid">
+        <div class="kiosk-tip-card">
+          <h4>🖥️ 문화의집 PC 전체화면 (Kiosk 모드)</h4>
+          <p>Chrome 또는 Edge 브라우저에서 <strong>F11</strong> 키를 누르거나, 키오스크 바로가기를 실행하면 몰입감 높은 체험 부스를 만들 수 있습니다.</p>
+        </div>
+        <div class="kiosk-tip-card">
+          <h4>📱 모바일 & QR코드 접속</h4>
+          <p>무료 웹 호스팅(GitHub Pages 등)에 업로드하면 문화의집 방문 청소년들이 스마트폰으로 QR코드를 찍어 각자의 휴대폰에서도 즐길 수 있습니다.</p>
+        </div>
+        <div class="kiosk-tip-card">
+          <h4>🌟 안전한 샌드박스 플레이</h4>
+          <p>모달 런처 내에서 게임을 실행한 후 [홈으로 나가기] 버튼을 누르면 언제든지 메인 화면으로 손쉽게 돌아올 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 한 줄 방명록 / 응원하기 -->
+    <div class="section-box">
+      <h3 class="section-title">💬 창작자 친구들에게 한 줄 응원 남기기</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        작품을 플레이하고 느낀 소감이나 멋진 응원의 메시지를 남겨주세요!
+      </p>
+
+      <div class="guestbook-input-group">
+        <input type="text" id="cheerName" class="input-author" placeholder="내 이름/닉네임" maxlength="10">
+        <input type="text" id="cheerMsg" class="input-message" placeholder="친구들의 작품에 따뜻한 응원을 남겨보세요! (예: 보물찾기 너무 재밌어요!)" maxlength="60">
+        <button class="btn-submit-cheer" id="btnSubmitCheer">응원 등록 ✨</button>
+      </div>
+
+      <div class="cheer-list" id="cheerList">
+        <!-- 응원 메시지 목록 -->
+      </div>
+    </div>
+  </main>
+
+  <!-- 모달 전체화면 플레이어 -->
+  <div class="player-modal" id="playerModal">
+    <div class="modal-header">
+      <div class="modal-game-info">
+        <h2 id="modalTitle">게임 제목</h2>
+        <span class="author-badge" id="modalAuthor">제작: 김학생</span>
+      </div>
+      <div class="modal-controls">
+        <button class="btn-modal-action" id="btnReloadGame">🔄 다시시작</button>
+        <button class="btn-modal-action" id="btnOpenNewTab">↗ 새 탭으로</button>
+        <button class="btn-modal-action btn-modal-close" id="btnCloseModal">✕ 나가기 (ESC)</button>
+      </div>
+    </div>
+    <div class="modal-iframe-container">
+      <iframe id="gameIframe" src="about:blank" allow="autoplay; fullscreen; accelerometer; gyroscope"></iframe>
+    </div>
+  </div>
+
+  <!-- 스마트폰 접속용 QR코드 팝업 모달 -->
+  <div class="qr-modal" id="qrModal">
+    <div class="qr-modal-card">
+      <h2>📱 스마트폰으로 플레이하기</h2>
+      <p>스마트폰 기본 카메라로 아래 QR 코드를 비추면<br>웹사이트에 바로 접속하여 게임을 즐길 수 있습니다.</p>
+      
+      <div class="qr-img-wrap">
+        <img id="qrImage" src="" alt="접속 QR코드">
+      </div>
+
+      <div class="qr-url-box">
+        <input type="text" id="qrUrlInput" class="qr-url-input" placeholder="호스팅 웹 주소 (https://...)">
+        <button class="btn-qr-update" id="btnUpdateQr">QR 갱신</button>
+      </div>
+
+      <div class="qr-btn-group">
+        <button class="btn-play" id="btnCopyUrl">🔗 링크 복사</button>
+        <button class="btn-modal-action btn-modal-close" id="btnCloseQr">✕ 닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2026 임실 청소년 문화의집 디지털 창작 아케이드 | 임실 청소년 문화의집 학생들의 멋진 상상력으로 만들어졌습니다.</p>
+  </footer>
+
+  <script>
+    // 11개 작품 메타데이터 정의
+    const projects = [
+      {
+        id: "shark",
+        title: "바다의 상어",
+        author: "김도준",
+        category: "game",
+        bgGradient: "linear-gradient(135deg, #04263d, #0077b6)",
+        icon: "🦈",
+        desc: "깊은 바닷속을 헤엄치는 상어를 조작하며 스릴 넘치는 모험과 점수를 획득하는 해양 아케이드 액션 게임입니다.",
+        file: "김도준 ocean_shark_game.html",
+        badge: "아케이드 액션"
+      },
+      {
+        id: "mole",
+        title: "두더지 잡기",
+        author: "김성원",
+        category: "game",
+        bgGradient: "linear-gradient(135deg, #2d5a27, #6fb04a)",
+        icon: "🔨",
+        desc: "구멍에서 튀어나오는 두더지를 망치로 때려 점수를 획득하세요! 난이도가 오르면 나타나는 폭탄을 주의해야 합니다.",
+        file: "김성원 whack_a_mole.html",
+        badge: "순발력 아케이드"
+      },
+      {
+        id: "balloon",
+        title: "풍선 터트리기",
+        author: "양도윤",
+        category: "game",
+        bgGradient: "linear-gradient(135deg, #0284c7, #38bdf8)",
+        icon: "🎯",
+        desc: "하단에서 떠오르는 다채로운 풍선을 다트로 맞추는 아케이드 게임입니다. 점수를 모으되 폭탄 풍선은 피하세요!",
+        file: "양도윤 balloon_archery.html",
+        badge: "슈팅 아케이드"
+      },
+      {
+        id: "timegame",
+        title: "네온 10초 스톱",
+        author: "임실 청소년 창작팀",
+        category: "game",
+        bgGradient: "linear-gradient(135deg, #111827, #ff007f)",
+        icon: "⏱️",
+        desc: "정확히 10.00초에 맞춰 버튼을 멈춰라! 친구들과 감각과 집중력을 겨루는 짜릿한 네온 타이밍 대결 게임입니다.",
+        file: "time game.html",
+        badge: "타이밍 챌린지"
+      },
+      {
+        id: "treasure",
+        title: "격자 보물찾기",
+        author: "권찬우",
+        category: "puzzle",
+        bgGradient: "linear-gradient(135deg, #1e1b4b, #b45309)",
+        icon: "💎",
+        desc: "지뢰찾기 스타일 격자 보드! 거리 숫자를 추리해 보물을 찾으세요. 아무 곳이나 누르면 폭탄(💣)이 터집니다!",
+        file: "권찬우 보물찾기.html",
+        badge: "지뢰찾기형 추리 퍼즐"
+      },
+      {
+        id: "colorseq",
+        title: "색상 순서 맞추기",
+        author: "김우진",
+        category: "puzzle",
+        bgGradient: "linear-gradient(135deg, #312e81, #7c3aed)",
+        icon: "🎨",
+        desc: "빛나는 색상의 순서를 기억하고 순서대로 눌러 단계를 통과하는 흥미진진한 두뇌 기억력 향상 트레이닝 게임입니다.",
+        file: "김우진 색깔맞추기.html",
+        badge: "기억력 두뇌게임"
+      },
+      {
+        id: "circleball",
+        title: "원 안에서 튀는 공",
+        author: "양도윤",
+        category: "art",
+        bgGradient: "linear-gradient(135deg, #0f172a, #334155)",
+        icon: "⚽",
+        desc: "원형 경계 속에서 회전하고 바운스하는 물리 엔진 시뮬레이션입니다. 시각적 리듬감과 물리 법칙의 재미를 보여줍니다.",
+        file: "양도윤 circle_bouncing_ball.html",
+        badge: "물리 시뮬레이션"
+      },
+      {
+        id: "snow",
+        title: "눈 내리는 밤",
+        author: "유지현",
+        category: "art",
+        bgGradient: "linear-gradient(135deg, #0f2027, #2c5364)",
+        icon: "❄️",
+        desc: "고요하고 평화로운 밤하늘에서 소복소복 하얗게 쌓여가는 눈송이를 바라보며 마음을 차분히 힐링하는 인터랙티브 아트입니다.",
+        file: "유지현 눈내리는 밤.html",
+        badge: "비주얼 힐링 아트"
+      },
+      {
+        id: "stars",
+        title: "별이 반짝이는 밤",
+        author: "이승아",
+        category: "art",
+        bgGradient: "linear-gradient(135deg, #090a0f, #d4af37)",
+        icon: "⭐",
+        desc: "깊은 어둠 속에서 영롱하게 반짝이는 금빛 별빛들의 조화! 마우스를 움직이며 우주의 서정성을 체험하는 작품입니다.",
+        file: "이승아 별이반짝이는 밤.html",
+        badge: "인터랙티브 아트"
+      },
+      {
+        id: "moveball",
+        title: "튀기는 공",
+        author: "한경우",
+        category: "art",
+        bgGradient: "linear-gradient(135deg, #1a1a2e, #16213e)",
+        icon: "🔮",
+        desc: "화면 경계를 유연하게 튕겨나가는 공들의 유려한 궤적과 움직임을 관찰할 수 있는 역동적인 물리 그래픽스 작품입니다.",
+        file: "한경우 움직이는 공.html",
+        badge: "모션 그래픽스"
+      },
+      {
+        id: "backrooms",
+        title: "백룸 탈출: 보스 배틀",
+        author: "임실 청소년 창작팀",
+        category: "boss",
+        bgGradient: "linear-gradient(135deg, #3a321a, #8b0000)",
+        icon: "👾",
+        desc: "미지의 백룸 미로를 탐험하며 거대한 보스와 박진감 넘치는 결전을 벌이는 고난도 어드벤처 RPG 게임입니다.",
+        file: "miro.html",
+        badge: "보스 배틀 RPG"
+      }
+    ];
+
+    // 요소 참조
+    const grid = document.getElementById('projectGrid');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const modal = document.getElementById('playerModal');
+    const iframe = document.getElementById('gameIframe');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalAuthor = document.getElementById('modalAuthor');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnReloadGame = document.getElementById('btnReloadGame');
+    const btnOpenNewTab = document.getElementById('btnOpenNewTab');
+
+    let currentPlayingFile = '';
+
+    // 카드 렌더링 함수
+    function renderProjects(filter = 'all') {
+      grid.innerHTML = '';
+      const filtered = filter === 'all' 
+        ? projects 
+        : projects.filter(p => p.category === filter);
+
+      filtered.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-banner" style="background: ${p.bgGradient}">
+            <span class="badge-category">${p.badge}</span>
+            <span>${p.icon}</span>
+          </div>
+          <div class="card-body">
+            <div class="author-tag">
+              <span>👤 ${p.author} 학생</span>
+            </div>
+            <h3 class="card-title">${p.title}</h3>
+            <p class="card-desc">${p.desc}</p>
+            <div class="card-actions">
+              <button class="btn-play" onclick="openGame('${encodeURIComponent(p.file)}', '${p.title}', '${p.author}')">
+                ▶ 플레이
+              </button>
+              <a href="${encodeURI(p.file)}" target="_blank" class="btn-external" title="새 탭으로 열기">
+                ↗
+              </a>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // 모달 게임 실행
+    window.openGame = function(encodedFile, title, author) {
+      const decodedFile = decodeURIComponent(encodedFile);
+      currentPlayingFile = decodedFile;
+      modalTitle.textContent = title;
+      modalAuthor.textContent = `제작: ${author} 학생`;
+      iframe.src = encodeURI(decodedFile);
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    // 모달 닫기
+    function closeGame() {
+      modal.classList.remove('active');
+      iframe.src = 'about:blank';
+      document.body.style.overflow = 'auto';
+      currentPlayingFile = '';
+    }
+
+    btnCloseModal.addEventListener('click', closeGame);
+
+    // 다시시작
+    btnReloadGame.addEventListener('click', () => {
+      if (currentPlayingFile) {
+        iframe.src = encodeURI(currentPlayingFile);
+      }
+    });
+
+    // 새 탭으로
+    btnOpenNewTab.addEventListener('click', () => {
+      if (currentPlayingFile) {
+        window.open(encodeURI(currentPlayingFile), '_blank');
+      }
+    });
+
+    // ESC 키로 모달 닫기 지원
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeGame();
+      }
+    });
+
+    // 필터 버튼 클릭
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderProjects(btn.dataset.filter);
+      });
+    });
+
+    // 방명록 (Local Storage)
+    const cheerName = document.getElementById('cheerName');
+    const cheerMsg = document.getElementById('cheerMsg');
+    const btnSubmitCheer = document.getElementById('btnSubmitCheer');
+    const cheerList = document.getElementById('cheerList');
+
+    const STORAGE_KEY = 'imsil_youth_center_cheers';
+
+    function getCheers() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) { return []; }
+      }
+      return [
+        { name: "문화의집 선생님", msg: "임실 청소년 문화의집 친구들이 직접 만든 게임과 작품들이 너무 멋집니다! 응원해요!", time: "오늘" },
+        { name: "민우", msg: "두더지 잡기랑 보물찾기 손맛이 대박이네요 ㅋㅋㅋ 꿀잼!", time: "오늘" },
+        { name: "지은", msg: "눈 내리는 밤이랑 별빛 아트 보면서 힐링하고 가요 ✨", time: "오늘" }
+      ];
+    }
+
+    function renderCheers() {
+      const list = getCheers();
+      cheerList.innerHTML = '';
+      list.slice(-15).reverse().forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'cheer-item';
+        div.innerHTML = `
+          <div>
+            <span class="user">[@${item.name}]</span>
+            <span>${item.msg}</span>
+          </div>
+          <span class="time">${item.time}</span>
+        `;
+        cheerList.appendChild(div);
+      });
+    }
+
+    btnSubmitCheer.addEventListener('click', () => {
+      const name = cheerName.value.trim() || '익명의 친구';
+      const msg = cheerMsg.value.trim();
+      if (!msg) {
+        alert('응원 메시지를 입력해주세요!');
+        return;
+      }
+      const list = getCheers();
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+      list.push({ name, msg, time: timeStr });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      cheerMsg.value = '';
+      renderCheers();
+    });
+
+    // 초기화 실행
+    renderProjects();
+    renderCheers();
+
+    // QR 모달 로직
+    const btnOpenQrModal = document.getElementById('btnOpenQrModal');
+    const qrModal = document.getElementById('qrModal');
+    const btnCloseQr = document.getElementById('btnCloseQr');
+    const qrImage = document.getElementById('qrImage');
+    const qrUrlInput = document.getElementById('qrUrlInput');
+    const btnUpdateQr = document.getElementById('btnUpdateQr');
+    const btnCopyUrl = document.getElementById('btnCopyUrl');
+
+    function updateQrCode(url) {
+      const targetUrl = url || window.location.href;
+      qrUrlInput.value = targetUrl;
+      qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetUrl)}`;
+    }
+
+    btnOpenQrModal.addEventListener('click', () => {
+      let currentUrl = window.location.href;
+      if (currentUrl.startsWith('file:')) {
+        currentUrl = 'https://kalndoma-dot.github.io/imsil-arcade/';
+      }
+      updateQrCode(currentUrl);
+      qrModal.classList.add('active');
+    });
+
+    btnCloseQr.addEventListener('click', () => {
+      qrModal.classList.remove('active');
+    });
+
+    btnUpdateQr.addEventListener('click', () => {
+      const inputUrl = qrUrlInput.value.trim();
+      if (inputUrl) {
+        updateQrCode(inputUrl);
+      }
+    });
+
+    btnCopyUrl.addEventListener('click', () => {
+      const copyTarget = qrUrlInput.value.trim();
+      if (navigator.clipboard && copyTarget) {
+        navigator.clipboard.writeText(copyTarget).then(() => {
+          alert('웹 주소가 클립보드에 복사되었습니다!');
+        });
+      } else {
+        alert('주소: ' + copyTarget);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>풍선 터트리기</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(180deg, #7ec8f2 0%, #bfe6ff 55%, #eaf7ff 100%);
+    font-family: 'Malgun Gothic', sans-serif;
+    cursor: crosshair;
+    user-select: none;
+  }
+  canvas { display: block; }
+
+  #hud {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    color: #204060;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.6);
+    z-index: 5;
+    pointer-events: none;
+  }
+  #hud .row { display: flex; gap: 26px; }
+  #hud .box { text-align: left; }
+  #hud .label { font-size: 12px; opacity: 0.75; }
+  #hud .value { font-size: 24px; font-weight: bold; }
+  #hud .hint { font-size: 12px; opacity: 0.85; margin-top: 6px; max-width: 380px; line-height: 1.4; font-weight: 600; color: #103254; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: rgba(10, 30, 50, 0.82);
+    color: #eaf7ff;
+    text-align: center;
+    z-index: 30;
+    padding: 20px;
+  }
+  .overlay h1 { font-size: 34px; margin: 0 0 6px; }
+  .overlay p { font-size: 15px; opacity: 0.85; margin: 0 0 18px; }
+
+  .section {
+    margin-bottom: 18px;
+  }
+  .section .secTitle {
+    font-size: 13px;
+    opacity: 0.8;
+    margin-bottom: 8px;
+  }
+  .optRow {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .optBtn {
+    padding: 10px 18px;
+    font-size: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    background: rgba(255,255,255,0.08);
+    color: #eaf7ff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .optBtn:hover { background: rgba(255,255,255,0.18); }
+  .optBtn.selected {
+    background: #ffd93d;
+    color: #2a1400;
+    border-color: #ffd93d;
+  }
+  .optBtn.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(0,0,0,0.2);
+  }
+  .optBtn .sub { display: block; font-size: 11px; font-weight: normal; opacity: 0.8; margin-top: 2px; }
+
+  #playBtn, #retryBtn, #nextBtn {
+    margin-top: 8px;
+    padding: 12px 34px;
+    font-size: 17px;
+    border: none;
+    border-radius: 30px;
+    background: #ff8a3d;
+    color: #2a1400;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  #playBtn:hover, #retryBtn:hover, #nextBtn:hover { background: #ffa15e; }
+
+  .btnRow { display: flex; gap: 12px; justify-content: center; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+  <div class="row">
+    <div class="box">
+      <div class="label" id="scoreLabel">점수 (목표 100)</div>
+      <div class="value" id="scoreVal">0</div>
+    </div>
+    <div class="box">
+      <div class="label">남은 시간</div>
+      <div class="value" id="timeVal">60</div>
+    </div>
+    <div class="box">
+      <div class="label">발사한 다트</div>
+      <div class="value" id="dartCountVal">0</div>
+    </div>
+  </div>
+  <div class="hint">🎯 하단 중앙에서 발사되는 다트로 올라가는 풍선을 맞추세요!<br>💣 <strong>폭탄 풍선</strong>을 맞추면 즉시 <strong>게임 오버</strong>됩니다!</div>
+</div>
+
+<div class="overlay" id="startOverlay" style="display:flex;">
+  <h1>풍선 터트리기</h1>
+  <p>속도 · 시간 · 난이도를 고르고 시작하세요</p>
+
+  <div class="section">
+    <div class="secTitle">풍선 속도</div>
+    <div class="optRow" id="speedRow">
+      <button class="optBtn" data-speed="slow">느림</button>
+      <button class="optBtn selected" data-speed="normal">보통</button>
+      <button class="optBtn" data-speed="fast">빠름</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="secTitle">제한 시간</div>
+    <div class="optRow" id="timeRow">
+      <button class="optBtn selected" data-time="60">60초<span class="sub">포인트 ↑</span></button>
+      <button class="optBtn" data-time="70">70초</button>
+      <button class="optBtn" data-time="80">80초</button>
+      <button class="optBtn" data-time="90">90초<span class="sub">포인트 ↓</span></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="secTitle">난이도</div>
+    <div class="optRow" id="diffRow">
+      <button class="optBtn selected" data-diff="easy">쉬움<span class="sub">목표 100점</span></button>
+      <button class="optBtn locked" data-diff="normal">보통<span class="sub">목표 250점 · 🔒</span></button>
+      <button class="optBtn locked" data-diff="hard">어려움<span class="sub">목표 400점 · 🔒</span></button>
+    </div>
+  </div>
+
+  <button id="playBtn">시작하기</button>
+</div>
+
+<div class="overlay" id="endOverlay">
+  <h1 id="endTitle">결과</h1>
+  <p id="endDesc">최종 점수: 0</p>
+  <div class="btnRow">
+    <button id="retryBtn">메뉴로</button>
+    <button id="nextBtn" style="display:none;">다음 난이도</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('scoreVal');
+const scoreLabel = document.getElementById('scoreLabel');
+const timeEl = document.getElementById('timeVal');
+const dartCountEl = document.getElementById('dartCountVal');
+
+const startOverlay = document.getElementById('startOverlay');
+const endOverlay = document.getElementById('endOverlay');
+const endTitle = document.getElementById('endTitle');
+const endDesc = document.getElementById('endDesc');
+const retryBtn = document.getElementById('retryBtn');
+const nextBtn = document.getElementById('nextBtn');
+const playBtn = document.getElementById('playBtn');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---------- 설정값 ----------
+const SPEED_MULT = { slow: 0.7, normal: 1.0, fast: 1.5 };
+const DIFFICULTY = {
+  easy:   { target: 100, balloonTarget: 7,  bombRate: 0.15, order: 0, next: 'normal' },
+  normal: { target: 250, balloonTarget: 10, bombRate: 0.22, order: 1, next: 'hard' },
+  hard:   { target: 400, balloonTarget: 14, bombRate: 0.28, order: 2, next: null }
+};
+
+let chosenSpeed = 'normal';
+let chosenTime = 60;
+let chosenDiff = 'easy';
+
+// 세션 동안 유지되는 잠금 해제 상태
+let unlocked = { easy: true, normal: false, hard: false };
+
+// ---------- 게임 상태 ----------
+let score = 0;
+let timeLeft = 60;
+let running = false;
+let pointsPerPop = 15;
+let balloonTarget = 7;
+let firedDartCount = 0;
+
+let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+let balloons = [];
+let darts = [];
+let particles = [];
+let clouds = [];
+let spawnIntervalId = null;
+let timerIntervalId = null;
+
+const BALLOON_COLORS = [
+  ['#ff6b6b', '#c92a2a'],
+  ['#ffd93d', '#f08c00'],
+  ['#4dabf7', '#1864ab'],
+  ['#69db7c', '#2b8a3e'],
+  ['#da77f2', '#862e9c'],
+  ['#ff922b', '#d9480f'],
+  ['#20c997', '#087f5b'],
+  ['#f06595', '#a61e4d']
+];
+
+const LAUNCH_X = () => canvas.width / 2;
+const LAUNCH_Y = () => canvas.height - 24;
+
+// ---------- 구름 ----------
+for (let i = 0; i < 6; i++) {
+  clouds.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight * 0.45,
+    scale: 0.6 + Math.random() * 1.1,
+    speed: 0.15 + Math.random() * 0.2
+  });
+}
+function updateClouds() {
+  for (const c of clouds) {
+    c.x += c.speed;
+    if (c.x - 80 * c.scale > canvas.width) c.x = -80 * c.scale;
+  }
+}
+function drawCloud(c) {
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  ctx.scale(c.scale, c.scale);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 40, 22, 0, 0, Math.PI * 2);
+  ctx.ellipse(30, -10, 28, 20, 0, 0, Math.PI * 2);
+  ctx.ellipse(-30, -6, 26, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// ---------- 풍선 ----------
+function spawnBalloon(initialY = null) {
+  const radius = 22 + Math.random() * 14;
+  const isBomb = Math.random() < DIFFICULTY[chosenDiff].bombRate;
+  const color = isBomb
+    ? ['#495057', '#212529']
+    : BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)];
+
+  const minX = radius + 40;
+  const maxX = canvas.width - radius - 40;
+  const x = minX + Math.random() * Math.max(20, maxX - minX);
+
+  const startY = initialY !== null ? initialY : canvas.height + radius + 10 + Math.random() * 40;
+
+  balloons.push({
+    x,
+    baseX: x,
+    y: startY,
+    radius,
+    color,
+    isBomb,
+    speed: (1.3 + Math.random() * 1.1) * SPEED_MULT[chosenSpeed],
+    swayOffset: Math.random() * Math.PI * 2,
+    swaySpeed: 0.02 + Math.random() * 0.02,
+    swayAmp: 16 + Math.random() * 16,
+    sparkTimer: 0
+  });
+}
+
+function updateBalloons(dt) {
+  for (let i = balloons.length - 1; i >= 0; i--) {
+    const b = balloons[i];
+    b.y -= b.speed * (dt / 16.6);
+    b.swayOffset += b.swaySpeed * (dt / 16.6);
+    b.x = b.baseX + Math.sin(b.swayOffset) * b.swayAmp;
+    if (b.isBomb) b.sparkTimer += dt;
+
+    // 화면 위로 벗어나면 삭제
+    if (b.y + b.radius < -30) {
+      balloons.splice(i, 1);
+    }
+  }
+}
+
+function drawBalloon(b) {
+  // 풍선 줄
+  const stringLen = 28;
+  ctx.beginPath();
+  ctx.moveTo(b.x, b.y + b.radius);
+  ctx.quadraticCurveTo(
+    b.x + Math.sin(b.swayOffset) * 6,
+    b.y + b.radius + stringLen * 0.5,
+    b.x,
+    b.y + b.radius + stringLen
+  );
+  ctx.strokeStyle = b.isBomb ? 'rgba(40,40,40,0.6)' : 'rgba(70,50,30,0.45)';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  // 풍선 본체 그라데이션
+  const gradient = ctx.createRadialGradient(
+    b.x - b.radius * 0.35, b.y - b.radius * 0.35, b.radius * 0.1,
+    b.x, b.y, b.radius
+  );
+  gradient.addColorStop(0, b.color[0]);
+  gradient.addColorStop(1, b.color[1]);
+
+  ctx.beginPath();
+  ctx.ellipse(b.x, b.y, b.radius * 0.86, b.radius, 0, 0, Math.PI * 2);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // 하이라이트 광택
+  ctx.beginPath();
+  ctx.ellipse(b.x - b.radius * 0.3, b.y - b.radius * 0.38, b.radius * 0.22, b.radius * 0.32, -0.4, 0, Math.PI * 2);
+  ctx.fillStyle = b.isBomb ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.55)';
+  ctx.fill();
+
+  // 풍선 매듭
+  ctx.beginPath();
+  ctx.moveTo(b.x - 4, b.y + b.radius - 2);
+  ctx.lineTo(b.x + 4, b.y + b.radius - 2);
+  ctx.lineTo(b.x, b.y + b.radius + 6);
+  ctx.closePath();
+  ctx.fillStyle = b.color[1];
+  ctx.fill();
+
+  // 폭탄 풍선 표시 (해골 마크 및 불꽃 심지)
+  if (b.isBomb) {
+    ctx.save();
+    // 해골 이모지 또는 폭탄 마크
+    ctx.font = `bold ${Math.round(b.radius * 0.9)}px 'Segoe UI Emoji', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💣', b.x, b.y + 1);
+
+    // 심지 상단 불꽃 스파크
+    const sparkX = b.x;
+    const sparkY = b.y - b.radius - 4;
+    ctx.beginPath();
+    ctx.arc(sparkX, sparkY, 3 + Math.sin(b.sparkTimer * 0.02) * 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = (Math.floor(b.sparkTimer / 100) % 2 === 0) ? '#ff4d4f' : '#ffd666';
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ---------- 하단 중앙 다트 발사대 ----------
+function drawLauncher() {
+  const lx = LAUNCH_X();
+  const ly = LAUNCH_Y();
+
+  // 바닥 베이스 플랫폼
+  ctx.save();
+  ctx.fillStyle = '#204060';
+  ctx.beginPath();
+  ctx.ellipse(lx, canvas.height, 46, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#3a6080';
+  ctx.beginPath();
+  ctx.ellipse(lx, canvas.height - 6, 32, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 조준 방향 각도 계산
+  const dx = mouse.x - lx;
+  const dy = mouse.y - ly;
+  const angle = Math.atan2(dy, dx);
+
+  // 대기 중인 다트 표시
+  ctx.translate(lx, ly);
+  ctx.rotate(angle);
+
+  // 발사대 총구/가이드
+  ctx.fillStyle = '#1c2d3d';
+  ctx.fillRect(-6, -5, 24, 10);
+
+  // 다트 몸체
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-16, 0);
+  ctx.lineTo(16, 0);
+  ctx.stroke();
+
+  // 다트 촉
+  ctx.fillStyle = '#ff4d4f';
+  ctx.beginPath();
+  ctx.moveTo(18, 0);
+  ctx.lineTo(8, -5);
+  ctx.lineTo(8, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  // 다트 날개
+  ctx.strokeStyle = '#00f2fe';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-16, 0);
+  ctx.lineTo(-24, -6);
+  ctx.moveTo(-16, 0);
+  ctx.lineTo(-24, 6);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // 조준 점선 가이드 (마우스 방향)
+  if (running) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(32, 64, 96, 0.35)';
+    ctx.setLineDash([4, 6]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.lineTo(mouse.x, mouse.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ---------- 다트 발사 ----------
+function throwDart(targetX, targetY) {
+  const startX = LAUNCH_X();
+  const startY = LAUNCH_Y();
+  const dx = targetX - startX;
+  const dy = targetY - startY;
+  const dist = Math.max(1, Math.hypot(dx, dy));
+  const speed = 25; // 시원한 발사 속도
+
+  darts.push({
+    x: startX,
+    y: startY,
+    vx: (dx / dist) * speed,
+    vy: (dy / dist) * speed,
+    rotation: Math.atan2(dy, dx),
+    radius: 7,
+    active: true
+  });
+
+  firedDartCount += 1;
+  dartCountEl.textContent = firedDartCount;
+}
+
+function updateDarts(dt) {
+  const step = dt / 16.6;
+  for (let i = darts.length - 1; i >= 0; i--) {
+    const d = darts[i];
+    if (!d.active) {
+      darts.splice(i, 1);
+      continue;
+    }
+
+    d.x += d.vx * step;
+    d.y += d.vy * step;
+    d.rotation = Math.atan2(d.vy, d.vx);
+
+    // 화면 밖으로 벗어나면 제거
+    if (d.x < -30 || d.x > canvas.width + 30 || d.y < -30 || d.y > canvas.height + 30) {
+      d.active = false;
+      continue;
+    }
+
+    // 풍선과 충돌 체크
+    for (let j = balloons.length - 1; j >= 0; j--) {
+      const b = balloons[j];
+      const dist = Math.hypot(d.x - b.x, d.y - b.y);
+      if (dist < b.radius + d.radius) {
+        d.active = false;
+        popBalloon(b);
+        balloons.splice(j, 1);
+        break;
+      }
+    }
+  }
+}
+
+function drawDart(d) {
+  ctx.save();
+  ctx.translate(d.x, d.y);
+  ctx.rotate(d.rotation);
+
+  ctx.strokeStyle = '#2b2b2b';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-16, 0);
+  ctx.lineTo(14, 0);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ff4d4f';
+  ctx.beginPath();
+  ctx.moveTo(16, 0);
+  ctx.lineTo(6, -5);
+  ctx.lineTo(6, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#00f2fe';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-16, 0);
+  ctx.lineTo(-24, -6);
+  ctx.moveTo(-16, 0);
+  ctx.lineTo(-24, 6);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ---------- 파티클 및 풍선 터짐 ----------
+function popBalloon(b) {
+  if (b.isBomb) {
+    // 폭탄 폭발 연출
+    for (let i = 0; i < 35; i++) {
+      const angle = (Math.PI * 2 * i) / 35 + Math.random() * 0.2;
+      const speed = 2.5 + Math.random() * 6;
+      particles.push({
+        x: b.x, y: b.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 30, maxLife: 30,
+        color: ['#ff4d4f', '#ff922b', '#ffd43b', '#495057'][Math.floor(Math.random() * 4)],
+        size: 4 + Math.random() * 4
+      });
+    }
+    // 즉시 게임 오버!
+    endGame(false, 'bomb');
+  } else {
+    // 일반 풍선 터짐
+    for (let i = 0; i < 16; i++) {
+      const angle = (Math.PI * 2 * i) / 16 + Math.random() * 0.3;
+      const speed = 2 + Math.random() * 4;
+      particles.push({
+        x: b.x, y: b.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 24, maxLife: 24,
+        color: b.color[0],
+        size: 3 + Math.random() * 2.5
+      });
+    }
+
+    score += pointsPerPop;
+    scoreEl.textContent = score;
+    if (score >= DIFFICULTY[chosenDiff].target) {
+      endGame(true);
+    }
+  }
+}
+
+function updateParticles(dt) {
+  const step = dt / 16.6;
+  for (const p of particles) {
+    p.x += p.vx * step;
+    p.y += p.vy * step;
+    p.vy += 0.12 * step;
+    p.life -= step;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    const alpha = Math.max(0, p.life / p.maxLife);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * alpha + 1, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ---------- 메인 루프 ----------
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(50, now - lastTime);
+  lastTime = now;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  updateClouds();
+  for (const c of clouds) drawCloud(c);
+
+  if (running) {
+    updateBalloons(dt);
+  }
+  for (const b of balloons) drawBalloon(b);
+
+  if (running) updateDarts(dt);
+  for (const d of darts) drawDart(d);
+
+  drawLauncher();
+
+  updateParticles(dt);
+  drawParticles();
+
+  requestAnimationFrame(loop);
+}
+
+// ---------- 스폰 관리 ----------
+function maintainBalloons() {
+  if (!running) return;
+  if (balloons.length < balloonTarget) {
+    spawnBalloon();
+  }
+}
+
+// ---------- 게임 흐름 ----------
+function startGame() {
+  score = 0;
+  timeLeft = chosenTime;
+  firedDartCount = 0;
+  pointsPerPop = Math.round(900 / chosenTime);
+  balloonTarget = DIFFICULTY[chosenDiff].balloonTarget;
+
+  balloons = [];
+  darts = [];
+  particles = [];
+
+  scoreLabel.textContent = `점수 (목표 ${DIFFICULTY[chosenDiff].target})`;
+  scoreEl.textContent = score;
+  timeEl.textContent = timeLeft;
+  dartCountEl.textContent = firedDartCount;
+
+  startOverlay.style.display = 'none';
+  endOverlay.style.display = 'none';
+  running = true;
+
+  // 시작 시 화면 아래쪽~중간 높이에서 풍선들을 자연스럽게 배치 스폰
+  for (let i = 0; i < balloonTarget; i++) {
+    const initY = canvas.height * 0.4 + (i / balloonTarget) * (canvas.height * 0.65);
+    spawnBalloon(initY);
+  }
+
+  clearInterval(spawnIntervalId);
+  clearInterval(timerIntervalId);
+
+  spawnIntervalId = setInterval(maintainBalloons, 400);
+  timerIntervalId = setInterval(() => {
+    timeLeft -= 1;
+    timeEl.textContent = timeLeft;
+    if (timeLeft <= 0) endGame(false, 'timeout');
+  }, 1000);
+}
+
+function endGame(won, reason = 'timeout') {
+  if (!running) return;
+  running = false;
+  clearInterval(spawnIntervalId);
+  clearInterval(timerIntervalId);
+
+  const target = DIFFICULTY[chosenDiff].target;
+  const label = { easy: '쉬움', normal: '보통', hard: '어려움' }[chosenDiff];
+
+  if (won) {
+    endTitle.textContent = `${label} 클리어! 🎉`;
+    endDesc.textContent = `최종 점수: ${score} / 목표 ${target}`;
+    const nextDiff = DIFFICULTY[chosenDiff].next;
+    if (nextDiff) {
+      unlocked[nextDiff] = true;
+      nextBtn.style.display = 'inline-block';
+      nextBtn.onclick = () => {
+        selectDiff(nextDiff);
+        startGame();
+      };
+    } else {
+      nextBtn.style.display = 'none';
+    }
+  } else {
+    if (reason === 'bomb') {
+      endTitle.textContent = '💥 폭탄 풍선 폭발! 게임 오버!';
+      endDesc.textContent = `폭탄 풍선을 맞추어 게임이 종료되었습니다! (최종 점수: ${score}점)`;
+    } else {
+      endTitle.textContent = '시간 종료!';
+      endDesc.textContent = `최종 점수: ${score} / 목표 ${target} (목표 달성 실패)`;
+    }
+    nextBtn.style.display = 'none';
+  }
+
+  endOverlay.style.display = 'flex';
+}
+
+// ---------- 시작 화면 옵션 선택 ----------
+function selectSpeed(v) {
+  chosenSpeed = v;
+  document.querySelectorAll('#speedRow .optBtn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.speed === v);
+  });
+}
+function selectTime(v) {
+  chosenTime = v;
+  document.querySelectorAll('#timeRow .optBtn').forEach(b => {
+    b.classList.toggle('selected', Number(b.dataset.time) === v);
+  });
+}
+function selectDiff(v) {
+  if (!unlocked[v]) return;
+  chosenDiff = v;
+  document.querySelectorAll('#diffRow .optBtn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.diff === v);
+  });
+}
+function refreshDiffLocks() {
+  document.querySelectorAll('#diffRow .optBtn').forEach(b => {
+    const d = b.dataset.diff;
+    b.classList.toggle('locked', !unlocked[d]);
+  });
+}
+
+document.querySelectorAll('#speedRow .optBtn').forEach(b => {
+  b.addEventListener('click', () => selectSpeed(b.dataset.speed));
+});
+document.querySelectorAll('#timeRow .optBtn').forEach(b => {
+  b.addEventListener('click', () => selectTime(Number(b.dataset.time)));
+});
+document.querySelectorAll('#diffRow .optBtn').forEach(b => {
+  b.addEventListener('click', () => selectDiff(b.dataset.diff));
+});
+
+playBtn.addEventListener('click', startGame);
+retryBtn.addEventListener('click', () => {
+  endOverlay.style.display = 'none';
+  refreshDiffLocks();
+  startOverlay.style.display = 'flex';
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+canvas.addEventListener('click', (e) => {
+  if (!running) return;
+  throwDart(e.clientX, e.clientY);
+});
+canvas.addEventListener('touchstart', (e) => {
+  if (!running || e.touches.length === 0) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  mouse.x = touch.clientX;
+  mouse.y = touch.clientY;
+  throwDart(touch.clientX, touch.clientY);
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 0) return;
+  mouse.x = e.touches[0].clientX;
+  mouse.y = e.touches[0].clientY;
+}, { passive: true });
+
+refreshDiffLocks();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
